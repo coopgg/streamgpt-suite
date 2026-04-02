@@ -6,50 +6,50 @@
 <title>StreamGPT Suite — AI-Powered Twitch Bot Suite</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0e0e10; color: #efeff1; }
-  a { color: #9147ff; text-decoration: none; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #ffffff; }
+  a { color: #C50000; text-decoration: none; }
   a:hover { text-decoration: underline; }
-  nav { background: #18181b; border-bottom: 1px solid #26262c; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-  .nav-logo { font-size: 1.1rem; font-weight: 700; color: #efeff1; }
-  .nav-logo span { color: #9147ff; }
+  nav { background: #111111; border-bottom: 1px solid #222222; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
+  .nav-logo span { color: #C50000; }
   .nav-links { display: flex; gap: 1.5rem; font-size: 0.875rem; }
-  .nav-links a { color: #adadb8; }
-  .nav-links a:hover { color: #efeff1; text-decoration: none; }
+  .nav-links a { color: #999999; }
+  .nav-links a:hover { color: #ffffff; text-decoration: none; }
   .hero { text-align: center; padding: 5rem 2rem 4rem; max-width: 700px; margin: 0 auto; }
-  .hero-badge { display: inline-block; background: #9147ff22; border: 1px solid #9147ff44; color: #9147ff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .hero-badge { display: inline-block; background: #C5000022; border: 1px solid #C5000044; color: #C50000; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1.5rem; }
   .hero h1 { font-size: 3rem; font-weight: 700; line-height: 1.15; margin-bottom: 1.25rem; }
-  .hero h1 span { color: #9147ff; }
-  .hero p { font-size: 1.1rem; color: #adadb8; line-height: 1.7; margin-bottom: 2rem; }
+  .hero h1 span { color: #C50000; }
+  .hero p { font-size: 1.1rem; color: #999999; line-height: 1.7; margin-bottom: 2rem; }
   .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
   .btn { display: inline-block; padding: 0.75rem 1.75rem; border-radius: 6px; font-weight: 600; font-size: 0.95rem; transition: opacity 0.15s; }
   .btn:hover { opacity: 0.85; text-decoration: none; }
-  .btn-primary { background: #9147ff; color: #fff; }
-  .btn-secondary { background: #26262c; color: #efeff1; }
+  .btn-primary { background: #C50000; color: #fff; }
+  .btn-secondary { background: #222222; color: #ffffff; }
   section { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
   .section-title { text-align: center; font-size: 1.75rem; font-weight: 700; margin-bottom: 0.75rem; }
-  .section-sub { text-align: center; color: #adadb8; margin-bottom: 3rem; }
+  .section-sub { text-align: center; color: #999999; margin-bottom: 3rem; }
   .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
-  .card { background: #18181b; border: 1px solid #26262c; border-radius: 10px; padding: 1.5rem; }
-  .card:hover { border-color: #9147ff44; }
+  .card { background: #111111; border: 1px solid #222222; border-radius: 10px; padding: 1.5rem; }
+  .card:hover { border-color: #C5000044; }
   .card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
   .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
-  .card p { font-size: 0.875rem; color: #adadb8; line-height: 1.6; }
-  .dark-band { background: #18181b; border-top: 1px solid #26262c; border-bottom: 1px solid #26262c; }
+  .card p { font-size: 0.875rem; color: #999999; line-height: 1.6; }
+  .dark-band { background: #111111; border-top: 1px solid #222222; border-bottom: 1px solid #222222; }
   .systems-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
-  .pill { background: #0e0e10; border: 1px solid #26262c; border-radius: 8px; padding: 1rem 1.25rem; }
+  .pill { background: #0a0a0a; border: 1px solid #222222; border-radius: 8px; padding: 1rem 1.25rem; }
   .pill h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; }
-  .pill p { font-size: 0.8rem; color: #adadb8; }
+  .pill p { font-size: 0.8rem; color: #999999; }
   .steps { display: flex; flex-direction: column; }
-  .step { display: flex; gap: 1.25rem; padding: 1.25rem 0; border-bottom: 1px solid #26262c; }
+  .step { display: flex; gap: 1.25rem; padding: 1.25rem 0; border-bottom: 1px solid #222222; }
   .step:last-child { border-bottom: none; }
-  .step-num { width: 32px; height: 32px; min-width: 32px; background: #9147ff22; border: 1px solid #9147ff44; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #9147ff; }
+  .step-num { width: 32px; height: 32px; min-width: 32px; background: #C5000022; border: 1px solid #C5000044; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #C50000; }
   .step h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
-  .step p { font-size: 0.875rem; color: #adadb8; line-height: 1.6; }
-  code { background: #26262c; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: #9147ff; }
+  .step p { font-size: 0.875rem; color: #999999; line-height: 1.6; }
+  code { background: #222222; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: #C50000; }
   .cta { text-align: center; padding: 4rem 2rem; }
   .cta h2 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
-  .cta p { color: #adadb8; margin-bottom: 2rem; }
-  footer { background: #18181b; border-top: 1px solid #26262c; padding: 2rem; text-align: center; font-size: 0.8rem; color: #adadb8; }
+  .cta p { color: #999999; margin-bottom: 2rem; }
+  footer { background: #111111; border-top: 1px solid #222222; padding: 2rem; text-align: center; font-size: 0.8rem; color: #999999; }
 </style>
 </head>
 <body>
