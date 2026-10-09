@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commands — StreamGPT Suite</title>
+  <link rel="icon" type="image/png" href="https://coopgg.github.io/assets/avatar.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;700;900&family=Inter:wght@400;500;600&display=swap">
+  <style>
+    :root {
+      --bg:          #0d0d0d;
+      --surface:     #161616;
+      --surface-2:   #1e1e1e;
+      --border:      #252525;
+      --fg:          #e8e8e8;
+      --fg-muted:    #808080;
+      --accent:      #C50000;
+      --accent-dim:  rgba(197,0,0,0.10);
+      --accent-mid:  rgba(197,0,0,0.28);
+      --coin:        #e6a800;
+      --coin-dim:    rgba(230,168,0,0.12);
+      --point:       #9988ee;
+      --point-dim:   rgba(153,136,238,0.12);
+      --destiny:     #7aa8e8;
+      --destiny-dim: rgba(122,168,232,0.12);
+      --mod:         #78c878;
+      --mod-dim:     rgba(100,200,100,0.10);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      min-height: 100vh;
+    }
+    .site-nav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .nav-inner { max-width: 1000px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 54px; gap: 4px; }
+    .nav-logo { font-family: 'Tektur', sans-serif; font-weight: 900; font-size: 1.05rem; color: var(--accent); text-decoration: none; letter-spacing: 0.04em; margin-right: auto; }
+    .nav-links { display: flex; list-style: none; gap: 2px; }
+    .nav-links a { color: var(--fg-muted); text-decoration: none; font-size: 0.85rem; padding: 6px 11px; border-radius: 5px; transition: color .15s, background .15s; }
+    .nav-links a:hover { color: var(--fg); background: var(--surface-2); }
+    .nav-links a.active { color: var(--accent); }
+    .page-header { text-align: center; padding: 52px 24px 36px; border-bottom: 1px solid var(--border); }
+    .page-header h1 { font-family: 'Tektur', sans-serif; font-weight: 900; font-size: clamp(2rem, 6vw, 3.2rem); letter-spacing: -0.02em; line-height: 1.1; text-wrap: balance; margin-bottom: 12px; }
+    .page-header h1 em { color: var(--accent); font-style: normal; }
+    .page-header p { color: var(--fg-muted); font-size: 0.92rem; max-width: 480px; margin: 0 auto; }
+    .jump-nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 900px; margin: 0 auto; padding: 28px 24px 12px; }
+    .jump-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 13px; border: 1px solid var(--border); border-radius: 999px; color: var(--fg-muted); text-decoration: none; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.02em; white-space: nowrap; transition: all .15s; }
+    .jump-pill:hover { border-color: var(--accent-mid); color: var(--accent); background: var(--accent-dim); }
+    main { max-width: 900px; margin: 0 auto; padding: 0 24px 80px; }
+    .category { margin-top: 60px; }
+    .cat-head { display: flex; align-items: baseline; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+    .cat-icon { font-size: 1.25rem; line-height: 1; }
+    .cat-title { font-family: 'Tektur', sans-serif; font-weight: 700; font-size: 1.2rem; letter-spacing: 0.01em; }
+    .cat-sub { font-size: 0.78rem; color: var(--fg-muted); margin-left: auto; letter-spacing: 0.03em; text-transform: uppercase; }
+    .cmd-list { width: 100%; }
+    .cmd-row { display: grid; grid-template-columns: auto 1fr; gap: 0 20px; align-items: start; padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .cmd-row:last-child { border-bottom: none; }
+    .cmd-syntax { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding-top: 2px; min-width: 200px; }
+    code.cmd { font-family: 'Courier New', 'Consolas', monospace; font-size: 0.88rem; color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-mid); padding: 4px 11px; border-radius: 5px; white-space: nowrap; display: inline-block; }
+    code.arg { font-family: 'Courier New', 'Consolas', monospace; font-size: 0.8rem; color: var(--fg-muted); background: var(--surface-2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+    .badge { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
+    .badge-coins   { background: var(--coin-dim);    color: var(--coin);    border: 1px solid rgba(230,168,0,0.25); }
+    .badge-points  { background: var(--point-dim);   color: var(--point);   border: 1px solid rgba(153,136,238,0.25); }
+    .badge-destiny { background: var(--destiny-dim); color: var(--destiny); border: 1px solid rgba(122,168,232,0.25); }
+    .badge-mod     { background: var(--mod-dim);     color: var(--mod);     border: 1px solid rgba(100,200,100,0.25); }
+    .cmd-body { min-width: 0; }
+    .cmd-desc { font-size: 0.9rem; color: var(--fg); line-height: 1.55; }
+    .cmd-example { margin-top: 6px; font-size: 0.8rem; color: var(--fg-muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ex-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--fg-muted); opacity: 0.7; }
+    .ex-code { font-family: 'Courier New', monospace; font-size: 0.8rem; color: var(--fg-muted); }
+    .note { background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 5px 5px 0; padding: 11px 16px; font-size: 0.83rem; color: var(--fg-muted); margin-top: 16px; line-height: 1.55; }
+    .note strong { color: var(--fg); }
+    footer { border-top: 1px solid var(--border); text-align: center; padding: 32px 24px; font-size: 0.8rem; color: var(--fg-muted); }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .cat-sub { display: none; }
+      .cmd-row { grid-template-columns: 1fr; gap: 8px; }
+      .cmd-syntax { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">StreamGPT</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="commands.html" class="active">Commands</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+      <li><a href="schedule.html">Schedule</a></li>
+      <li><a href="links.html">Links</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="page-header">
+  <h1>Chat <em>Commands</em></h1>
+  <p>Everything the Coop Troop can do — organized by category with usage examples for anything that needs a target or input.</p>
+</header>
+
+<div class="jump-nav">
+  <a href="#ai-chat"   class="jump-pill">🤖 AI Chat</a>
+  <a href="#games"     class="jump-pill">🎮 Chat Games</a>
+  <a href="#destiny"   class="jump-pill">🏛️ Destiny</a>
+  <a href="#social"    class="jump-pill">👥 Social</a>
+  <a href="#coins"     class="jump-pill">💰 Coins</a>
+  <a href="#events"    class="jump-pill">🎲 Events</a>
+  <a href="#quotes"    class="jump-pill">💬 Quotes</a>
+  <a href="#info"      class="jump-pill">ℹ️ Stream Info</a>
+  <a href="#vip"       class="jump-pill">⭐ VIP</a>
+  <a href="#music"     class="jump-pill">🎵 Music</a>
+</div>
+
+<main>
+
+  <!-- ═══════════════════════════════════════════════════ AI CHAT ══ -->
+  <section class="category" id="ai-chat">
+    <div class="cat-head">
+      <span class="cat-icon">🤖</span>
+      <span class="cat-title">AI Chat</span>
+      <span class="cat-sub">Powered by CoopGPT</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!coopgpt</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Learn what CoopGPT can do and get a quick rundown of active commands.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax">
+          <code class="cmd">!shoutout</code>
+          <code class="arg">@user</code>
+          <span class="badge badge-mod">Mod</span>
+        </div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Generates an AI-powered shoutout for a streamer. Pulls their info and writes something fresh every time. Mod and broadcaster only.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!shoutout @SomeStreamer</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!lurk</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Let chat know you're stepping away but still supporting the stream. The lurk is acknowledged. You are seen.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════ CHAT GAMES ══ -->
+  <section class="category" id="games">
+    <div class="cat-head">
+      <span class="cat-icon">🎮</span>
+      <span class="cat-title">Chat Games</span>
+      <span class="cat-sub">Win Coop Coins</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!trivia</code><span class="badge badge-coins">Coins</span></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Starts an AI-generated trivia question. First person to type the correct answer in chat wins coins. You have 30 seconds.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!riddle</code><span class="badge badge-coins">Coins</span></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Starts an AI riddle. Think it through — first correct answer wins coins. You have 60 seconds.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!madlibs</code><span class="badge badge-coins">Coins</span></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Starts a Mad Libs game. Chat fills in words one at a time — noun, verb, adjective, celebrity, place, silly sound. The AI weaves them into a story and reads it to chat. Everyone who contributes earns coins.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!20q</code><span class="badge badge-coins">Coins</span></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Starts a round of 20 Questions. The AI picks something — a person, place, or thing. Chat asks yes/no questions to narrow it down. First person to guess correctly wins coins.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!capitals</code><span class="badge badge-coins">Coins</span></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Starts a US state capitals quiz. The bot names a state — first to type the correct capital wins coins.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!cyoa</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Starts a Choose Your Own Adventure. The AI writes a story and chat votes on what happens next. The story evolves based on whatever the Coop Troop decides.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!8ball</code><code class="arg">question</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Consult the magic 8-ball. It knows things. It does not explain itself.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!8ball Will I hit Diamond this season?</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!quickmath</code><span class="badge badge-coins">Coins</span></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">A math problem drops in chat. Type only the number — fastest correct answer wins coins.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!chuck</code></div>
+        <div class="cmd-body"><div class="cmd-desc">Delivers a random Chuck Norris fact. Every single one is true.</div></div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!dadjoke</code></div>
+        <div class="cmd-body"><div class="cmd-desc">Get a dad joke. It will be terrible. You asked for this.</div></div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!funfact</code></div>
+        <div class="cmd-body"><div class="cmd-desc">Get a random fun fact. Educational content. Technically.</div></div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!darkjoke</code></div>
+        <div class="cmd-body"><div class="cmd-desc">Get a dark joke. These go places. Viewer discretion advised.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ DESTINY ══ -->
+  <section class="category" id="destiny">
+    <div class="cat-head">
+      <span class="cat-icon">🏛️</span>
+      <span class="cat-title">Destiny</span>
+      <span class="cat-sub">Active during Destiny 2 streams</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!towerthought</code><span class="badge badge-destiny">Destiny</span></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Summons a Destiny-themed shower thought from the Tower. The kind that makes you stare at the ceiling for five minutes thinking about Ghosts and the Vex.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!rallyflag</code><span class="badge badge-destiny">Destiny</span></div>
+        <div class="cmd-body"><div class="cmd-desc">Rally to the flag. You know what to do.</div></div>
+      </div>
+    </div>
+    <div class="note"><strong>Destiny streams only.</strong> These commands are active when CoopGG is live on Destiny 2.</div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ SOCIAL ══ -->
+  <section class="category" id="social">
+    <div class="cat-head">
+      <span class="cat-icon">👥</span>
+      <span class="cat-title">Social</span>
+      <span class="cat-sub">For when words aren't enough</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!cookie</code><code class="arg">@user</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Give someone a cookie. A kind gesture for a kind person. 🍪</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!cookie @CoopGG__</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!hug</code><code class="arg">@user</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Give someone a hug. Wholesome content only.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!hug @CoopGG__</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!slap</code><code class="arg">@user</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Slap someone. They probably deserve it.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!slap @CoopGG__</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!fart</code><code class="arg">@user</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Let one rip in someone's direction. A devastating social maneuver.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!fart @CoopGG__</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!corner</code><code class="arg">@user</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Put someone in the corner. They know what they did.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!corner @CoopGG__</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!ban</code><code class="arg">@user</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Fake ban someone from the stream. Not real. Do not panic.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!ban @CoopGG__</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!roast</code><code class="arg">@user</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Get an AI roast delivered to a viewer. Leave out <code class="arg">@user</code> to roast yourself — CoopGPT has no mercy either way.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!roast @CoopGG__</span>&nbsp;·&nbsp;<span class="ex-code">!roast</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════ ECONOMY ══ -->
+  <section class="category" id="coins">
+    <div class="cat-head">
+      <span class="cat-icon">💰</span>
+      <span class="cat-title">Coins &amp; Economy</span>
+      <span class="cat-sub">Earn and spend Coop Coins</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!earnCoins</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Learn how to earn Coop Coins — by watching, winning chat games, and participating in stream events.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!balance</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Check your current Coop Coin balance. Know your numbers.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!give</code><code class="arg">@user</code><code class="arg">amount</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Give some of your Coop Coins to another viewer. Generosity is valid.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!give @CoopGG__ 100</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!gamble</code><code class="arg">amount</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Gamble some of your Coop Coins. Double up or lose it all — that's the game.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!gamble 200</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!heist</code><code class="arg">amount</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Start or join a coin heist. Put some coins in, and if the heist succeeds, everyone walks away with more. If it fails — well.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!heist 500</span></div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!leaderboard</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">See the top Coop Coin holders. Clout, measured in fake money.</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">Coop Coins are earned automatically while watching and by winning chat games. The more you participate, the more you earn.</div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ EVENTS ══ -->
+  <section class="category" id="events">
+    <div class="cat-head">
+      <span class="cat-icon">🎲</span>
+      <span class="cat-title">Events</span>
+      <span class="cat-sub">Raffles, giveaways &amp; viewer queue</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!raffle</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Enter the current raffle when one is running. CoopGG or a mod will announce when a raffle is open and what the prize is. One entry per viewer.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!giveaway</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Enter the current giveaway when one is active. Watch for CoopGG's announcement in chat — giveaways are announced with instructions before entries open.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!join</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Add yourself to the viewer play queue for Playing With Viewers sessions. CoopGG will announce when the queue is open and what game is being played.</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">Raffle, giveaway, and viewer play sessions are announced live in chat. Watch for the announcement before using these commands.</div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ QUOTES ══ -->
+  <section class="category" id="quotes">
+    <div class="cat-head">
+      <span class="cat-icon">💬</span>
+      <span class="cat-title">Quotes</span>
+      <span class="cat-sub">Stream memory</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!quote</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Pulls a random saved quote from the stream archive. Things were said. They have been preserved.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax">
+          <code class="cmd">!addquote</code>
+          <code class="arg">text</code>
+          <span class="badge badge-mod">Mod</span>
+        </div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Saves a quote to the archive. Mod only — so the archive doesn't immediately become a chaos document.</div>
+          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!addquote "I did not expect that" - CoopGG, 2024</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════ STREAM INFO ══ -->
+  <section class="category" id="info">
+    <div class="cat-head">
+      <span class="cat-icon">ℹ️</span>
+      <span class="cat-title">Stream Info</span>
+      <span class="cat-sub">Quick lookups</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!uptime</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">See how long the stream has been live. Useful for knowing how deep into the session we already are.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!discord</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Get the link to the Coop Troop Discord. Come hang out between streams.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!rules</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Get the stream rules. Short version: be a normal person and everyone has a good time.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!deaths</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">See the current death count for the session. Sometimes the number is very high. We do not talk about it.</div>
+        </div>
+      </div>
+      <div class="cmd-row">
+        <div class="cmd-syntax">
+          <code class="cmd">!dead</code>
+          <span class="badge badge-mod">Mod</span>
+        </div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Increment the death counter by one. Mod only, because CoopGG will not be counting his own deaths.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ VIP ══ -->
+  <section class="category" id="vip">
+    <div class="cat-head">
+      <span class="cat-icon">⭐</span>
+      <span class="cat-title">VIP</span>
+      <span class="cat-sub">Channel Point Redemption</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">Timed VIP</code><span class="badge badge-points">Channel Points</span></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">Redeem channel points to receive VIP status for a set number of days. VIP is automatically granted when you redeem and automatically removed when time is up. Subscribers get an extended duration.</div>
+        </div>
+      </div>
+    </div>
+    <div class="note"><strong>This is a Channel Point Redemption,</strong> not a chat command. Find it in the channel points menu below the stream.</div>
+  </section>
+
+  <!-- ═════════════════════════════════════════════════════ MUSIC ══ -->
+  <section class="category" id="music">
+    <div class="cat-head">
+      <span class="cat-icon">🎵</span>
+      <span class="cat-title">Music</span>
+      <span class="cat-sub">Spotify integration</span>
+    </div>
+    <div class="cmd-list">
+      <div class="cmd-row">
+        <div class="cmd-syntax"><code class="cmd">!music</code></div>
+        <div class="cmd-body">
+          <div class="cmd-desc">See what's currently playing on Spotify — artist, track, and album. In case it slaps and you need to know.</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">Music commands are active when Spotify is connected during stream.</div>
+  </section>
+
+</main>
+
+<footer>
+  <p>StreamGPT Suite by <a href="https://twitch.tv/CoopGG__" target="_blank" rel="noopener">CoopGG__</a> &nbsp;·&nbsp; Built with 🤖 + too much coffee</p>
+</footer>
+
+</body>
+</html>
