@@ -2,126 +2,90 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/png" href="https://coopgg.github.io/assets/avatar.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StreamGPT Suite — AI-Powered Twitch Bot Suite</title>
+<meta name="color-scheme" content="dark">
+<meta name="description" content="StreamGPT Suite: an AI-powered chat bot suite for Twitch built on Streamerbot and OpenAI. Pay once, own it forever.">
+<title>StreamGPT Suite | AI-Powered Twitch Bot Suite</title>
+<link rel="icon" type="image/png" href="https://coopgg.github.io/assets/avatar.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Tektur:wght@700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://coopgg.github.io/assets/site.css">
+<link rel="stylesheet" href="suite.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Tektur:wght@700;800;900&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #ffffff; }
-  a { color: #C50000; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  nav { background: #111111; border-bottom: 1px solid #222222; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-  .nav-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
-  .nav-logo img { width: 36px; height: 36px; border-radius: 50%; }
-  .nav-logo-text { font-size: 1.1rem; font-weight: 800; font-family: 'Tektur', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; color: #ffffff; }
-  .nav-links { display: flex; gap: 1.5rem; font-size: 0.875rem; }
-  .nav-links a { color: #999999; }
-  .nav-links a:hover { color: #ffffff; text-decoration: none; }
-  .hero { text-align: center; padding: 5rem 2rem 4rem; max-width: 700px; margin: 0 auto; }
-  .hero-badge { display: inline-block; background: #C5000022; border: 1px solid #C5000044; color: #C50000; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 1.5rem; }
-  .hero-wordmark { display: block; max-width: 360px; width: 90%; margin: 0 auto 1.75rem; border-radius: 6px; }
-  .hero h1 { font-size: 3rem; font-weight: 800; font-family: 'Tektur', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.15; margin-bottom: 1.25rem; }
-  .hero h1 span { color: #C50000; }
-  .hero p { font-size: 1.1rem; color: #999999; line-height: 1.7; margin-bottom: 2rem; }
-  .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-  .btn { display: inline-block; padding: 0.75rem 1.75rem; border-radius: 6px; font-weight: 600; font-size: 0.95rem; transition: opacity 0.15s; }
-  .btn:hover { opacity: 0.85; text-decoration: none; }
-  .btn-primary { background: #C50000; color: #fff; }
-  .btn-secondary { background: #222222; color: #ffffff; }
-  section { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
-  .section-title { text-align: center; font-size: 1.75rem; font-weight: 700; margin-bottom: 0.75rem; }
-  .section-sub { text-align: center; color: #999999; margin-bottom: 3rem; }
-  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
-  .card { background: #111111; border: 1px solid #222222; border-radius: 10px; padding: 1.5rem; }
-  .card:hover { border-color: #C5000044; }
-  .card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
-  .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
-  .card p { font-size: 0.875rem; color: #999999; line-height: 1.6; }
-  .dark-band { background: #111111; border-top: 1px solid #222222; border-bottom: 1px solid #222222; }
-  .systems-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
-  .pill { background: #0a0a0a; border: 1px solid #222222; border-radius: 8px; padding: 1rem 1.25rem; }
-  .pill h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; }
-  .pill p { font-size: 0.8rem; color: #999999; }
-  .steps { display: flex; flex-direction: column; }
-  .step { display: flex; gap: 1.25rem; padding: 1.25rem 0; border-bottom: 1px solid #222222; }
-  .step:last-child { border-bottom: none; }
-  .step-num { width: 32px; height: 32px; min-width: 32px; background: #C5000022; border: 1px solid #C5000044; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #C50000; }
-  .step h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
-  .step p { font-size: 0.875rem; color: #999999; line-height: 1.6; }
-  code { background: #222222; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: #C50000; }
-  .req-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-  .req-item { background: #111111; border: 1px solid #222222; border-radius: 10px; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .wordmark { display: block; max-width: 340px; width: 100%; border-radius: 6px; }
+  .hero h1 { line-height: 1; }
+  .features-grid, .req-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 0.75rem; margin-top: 1.5rem; }
+  .card, .req-item { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.4rem; }
+  .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .card p { color: var(--text-dim); font-size: 0.92rem; }
+  .systems-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 0.6rem; margin-top: 1.5rem; }
+  .pill { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem 1rem; }
+  .pill h4 { font-size: 0.9rem; font-weight: 600; }
+  .pill p { font-size: 0.82rem; color: var(--text-dim); }
+  .pill.opt { border-color: var(--ok-line); }
+  .pill.opt h4, .opt-tag { color: var(--ok); }
+  .opt-tag { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .req-item { display: flex; flex-direction: column; gap: 0.5rem; }
   .req-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
-  .req-icon { font-size: 1.4rem; line-height: 1; }
-  .req-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; flex-shrink: 0; }
-  .badge-free { background: #0a2a0a; color: #4caf50; border: 1px solid #4caf5044; }
-  .badge-required { background: #2a1a00; color: #f0a000; border: 1px solid #f0a00044; }
-  .badge-ongoing { background: #1a0a00; color: #ff6b35; border: 1px solid #ff6b3544; }
-  .req-item h4 { font-size: 0.95rem; font-weight: 600; color: #ffffff; margin: 0; }
-  .req-item p { font-size: 0.82rem; color: #888888; line-height: 1.55; }
-  .req-item a { color: #C50000; }
-  .cost-callout { background: #0f0800; border: 1px solid #f0a00033; border-radius: 10px; padding: 1.25rem 1.5rem; display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1.5rem; }
-  .cost-callout-icon { font-size: 1.25rem; line-height: 1; flex-shrink: 0; padding-top: 2px; }
-  .cost-callout h4 { font-size: 0.9rem; font-weight: 600; color: #f0a000; margin-bottom: 0.35rem; }
-  .cost-callout p { font-size: 0.82rem; color: #888888; line-height: 1.55; }
-  .skill-bar { background: #111111; border: 1px solid #222222; border-radius: 10px; padding: 1.25rem 1.5rem; display: flex; gap: 1.25rem; align-items: center; }
+  .req-item h4 { font-size: 1rem; font-weight: 600; }
+  .req-item p { color: var(--text-dim); font-size: 0.9rem; }
+  .req-badge { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.6rem; border-radius: 999px; border: 1px solid; white-space: nowrap; flex-shrink: 0; }
+  .badge-free { color: var(--ok); background: var(--ok-soft); border-color: var(--ok-line); }
+  .badge-required { color: var(--warn); background: var(--warn-soft); border-color: var(--warn-line); }
+  .badge-ongoing { color: var(--hot); background: var(--hot-soft); border-color: var(--hot-line); }
+  .cost-callout { margin-top: 0.75rem; background: var(--warn-soft); border: 1px solid var(--warn-line); border-radius: 12px; padding: 1.15rem 1.4rem; }
+  .cost-callout h4 { color: var(--warn); font-size: 0.95rem; margin-bottom: 0.3rem; }
+  .cost-callout p { color: var(--text-dim); font-size: 0.9rem; }
+  .cost-callout strong { color: var(--warn); }
+  .skill-bar { margin-top: 0.75rem; display: flex; gap: 1.1rem; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.15rem 1.4rem; }
   .skill-dots { display: flex; gap: 6px; flex-shrink: 0; }
   .skill-dot { width: 12px; height: 12px; border-radius: 50%; }
-  .skill-dot.filled { background: #C50000; }
-  .skill-dot.empty { background: #2a2a2a; }
-  .skill-bar p { font-size: 0.82rem; color: #888888; line-height: 1.55; }
-  .skill-bar strong { color: #ffffff; }
-  .cta { text-align: center; padding: 4rem 2rem; }
-  .cta h2 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
-  .cta p { color: #999999; margin-bottom: 2rem; }
-  footer { background: #111111; border-top: 1px solid #222222; padding: 2rem; text-align: center; font-size: 0.8rem; color: #999999; }
+  .skill-dot.filled { background: var(--accent); }
+  .skill-dot.empty { background: var(--border-strong); }
+  .skill-bar p { color: var(--text-dim); font-size: 0.9rem; }
+  .skill-bar strong { color: var(--text); }
+  .steps { display: flex; flex-direction: column; margin-top: 1rem; }
+  .step { display: flex; gap: 1.1rem; padding: 1.15rem 0; border-bottom: 1px solid var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step-num { width: 32px; height: 32px; min-width: 32px; background: var(--accent-soft); border: 1px solid rgba(255, 90, 90, 0.4); border-radius: 50%; display: grid; place-items: center; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: var(--accent-text); }
+  .step h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.2rem; }
+  .step p { color: var(--text-dim); font-size: 0.92rem; }
+  .cta-box { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 1.75rem 1.75rem; }
+  .cta-box .hero-actions { margin-top: 0; }
+  @media (max-width: 560px) { .skill-bar { align-items: flex-start; flex-direction: column; } }
 </style>
 </head>
 <body>
-
-<nav>
-  <a href="index.html" class="nav-logo">
-    <img src="https://coopgg.github.io/assets/streamgpt-logo.png" alt="StreamGPT Suite">
-    <span class="nav-logo-text">STREAMGPT <span style="color:#C50000;">SUITE</span></span>
-  </a>
-  <div class="nav-links">
-    <a href="#features">Features</a>
-    <a href="#systems">Systems</a>
-    <a href="#requirements">Requirements</a>
-    <a href="#install">Install</a>
-    <a href="faq.html">FAQ</a>
-    <a href="https://twitch.tv/coopgg_" target="_blank">by CoopGG</a>
-  </div>
-</nav>
-
-<div class="hero">
-  <div class="hero-badge">v0.9-beta</div>
-  <img src="https://coopgg.github.io/assets/streamgpt-wordmark.png" alt="StreamGPT Suite" class="hero-wordmark">
-  <p>StreamGPT Suite connects Streamerbot, Python, and OpenAI to bring intelligent automation to your Twitch stream. One installer. Everything configured. Pay once, own it forever.</p>
-  <div class="hero-btns">
-    <a href="#install" class="btn btn-primary">Get Started</a>
-    <a href="https://twitch.tv/coopgg_" target="_blank" class="btn btn-secondary">See it Live</a>
-  </div>
-</div>
-
-<section id="features">
-  <div class="section-title">Everything your stream needs</div>
-  <div class="section-sub">Built for streamers who want more than static bot responses.</div>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html"><img src="https://coopgg.github.io/assets/streamgpt-logo.png" alt=""><span class="brand-name">StreamGPT <b>Suite</b></span></a>
+    <nav class="topnav" aria-label="Site"><a href="index.html#features">Features</a><a href="index.html#systems">Systems</a><a href="index.html#requirements">Requirements</a><a href="index.html#install">Install</a><a href="faq.html">FAQ</a><a href="commands.html">Commands</a></nav>
+  </header>
+  <section class="hero">
+    <p class="eyebrow">v0.9-beta &middot; AI-powered Twitch bot suite</p>
+    <h1><img src="https://coopgg.github.io/assets/streamgpt-wordmark.png" alt="StreamGPT Suite" class="wordmark"></h1>
+    <p class="lede">StreamGPT Suite connects Streamerbot, Python, and OpenAI to bring intelligent automation to your Twitch stream. One installer. Everything configured. Pay once, own it forever.</p>
+    <div class="hero-actions"><a href="#install" class="btn">Get started</a><a href="https://twitch.tv/coopgg_" target="_blank" rel="noopener" class="btn btn-ghost">See it live</a></div>
+  </section>
+  <main id="main">
+<section class="block" id="features">
+  <h2 class="section-title">Everything your stream needs</h2>
+  <p class="section-sub">Built for streamers who want more than static bot responses.</p>
   <div class="features-grid">
-    <div class="card"><div class="card-icon">🤖</div><h3>AI-Powered Responses</h3><p>Every message is generated by GPT-4o-mini — context-aware, personalized, and never the same twice.</p></div>
-    <div class="card"><div class="card-icon">⚡</div><h3>One-Click Installer</h3><p>Run the Python installer, answer a few questions, and every file is configured with your settings automatically.</p></div>
-    <div class="card"><div class="card-icon">🎮</div><h3>Chat Games</h3><p>Trivia, riddles, 20 Questions, capitals quiz, Choose Your Own Adventure, quick math, 8ball, heists, slots — your community always has something to do.</p></div>
-    <div class="card"><div class="card-icon">🪙</div><h3>Virtual Economy</h3><p>Fully featured coin system — earn, gamble, heist, give, and compete on the leaderboard.</p></div>
-    <div class="card"><div class="card-icon">📢</div><h3>Smart Alerts</h3><p>AI-generated messages for follows, subs, resubs, gift subs, and bits — every alert feels personal.</p></div>
-    <div class="card"><div class="card-icon">💸</div><h3>Pay Once, Own Forever</h3><p>No subscriptions. No monthly fees. Buy it once and get all future updates. Yours to keep.</p></div>
+    <div class="card"><h3>AI-Powered Responses</h3><p>Every message is generated by GPT-4o-mini: context-aware, personalized, and never the same twice.</p></div>
+    <div class="card"><h3>One-Click Installer</h3><p>Run the Python installer, answer a few questions, and every file is configured with your settings automatically.</p></div>
+    <div class="card"><h3>Chat Games</h3><p>Trivia, riddles, 20 Questions, capitals quiz, Choose Your Own Adventure, quick math, 8ball, heists and slots. Your community always has something to do.</p></div>
+    <div class="card"><h3>Virtual Economy</h3><p>Fully featured coin system: earn, gamble, heist, give, and compete on the leaderboard.</p></div>
+    <div class="card"><h3>Smart Alerts</h3><p>AI-generated messages for follows, subs, resubs, gift subs, and bits. Every alert feels personal.</p></div>
+    <div class="card"><h3>Pay Once, Own Forever</h3><p>No subscriptions. No monthly fees. Buy it once and get all future updates. Yours to keep.</p></div>
   </div>
 </section>
 
-<div class="dark-band" id="systems">
-  <section>
-    <div class="section-title">What's included</div>
-    <div class="section-sub">Core systems + optional add-ons — all pre-configured by the installer.</div>
+<section class="block" id="systems">
+    <h2 class="section-title">What's included</h2>
+    <p class="section-sub">Core systems and optional add-ons, all pre-configured by the installer.</p>
     <div class="systems-grid">
       <div class="pill"><h4>Show Starter</h4><p>AI hype when you go live</p></div>
       <div class="pill"><h4>Chat Recap</h4><p>AI summary on a timer</p></div>
@@ -132,7 +96,7 @@
       <div class="pill"><h4>Alerts</h4><p>Follow, sub, bits, gifts</p></div>
       <div class="pill"><h4>Trivia</h4><p>Multiple choice + coin rewards</p></div>
       <div class="pill"><h4>Riddle</h4><p>Fuzzy answer matching</p></div>
-      <div class="pill"><h4>20 Questions</h4><p>AI picks — chat guesses</p></div>
+      <div class="pill"><h4>20 Questions</h4><p>AI picks, chat guesses</p></div>
       <div class="pill"><h4>Capitals Quiz</h4><p>US state capitals + coins</p></div>
       <div class="pill"><h4>Choose Your Own Adventure</h4><p>Chat-driven story voting</p></div>
       <div class="pill"><h4>Quick Math</h4><p>Math race + coins</p></div>
@@ -147,62 +111,43 @@
       <div class="pill"><h4>Chuck Norris</h4><p>!chuck for random facts</p></div>
       <div class="pill"><h4>Fun Fact</h4><p>Random facts from the web</p></div>
       <div class="pill"><h4>Info Commands</h4><p>!uptime, !discord, !rules and more</p></div>
-      <div class="pill" style="border-color:#4caf5033;"><h4 style="color:#4caf50;">Spotify</h4><p>Song display + channel point requests <span style="color:#4caf50;font-size:0.7rem;">Optional</span></p></div>
-      <div class="pill" style="border-color:#4caf5033;"><h4 style="color:#4caf50;">Death Counter</h4><p>Track and post deaths in chat <span style="color:#4caf50;font-size:0.7rem;">Optional</span></p></div>
+      <div class="pill opt"><h4>Spotify</h4><p>Song display + channel point requests <span class="opt-tag">Optional</span></p></div>
+      <div class="pill opt"><h4>Death Counter</h4><p>Track and post deaths in chat <span class="opt-tag">Optional</span></p></div>
     </div>
   </section>
-</div>
 
 
-<section id="requirements" style="max-width:900px;">
-  <div class="section-title">Before you buy</div>
-  <div class="section-sub">StreamGPT Suite is a technical product. Make sure you have everything below before purchasing.</div>
+<section class="block" id="requirements">
+  <h2 class="section-title">Before you buy</h2>
+  <p class="section-sub">StreamGPT Suite is a technical product. Make sure you have everything below before purchasing.</p>
 
   <div class="req-grid">
     <div class="req-item">
-      <div class="req-item-top">
-        <div>
-          <div class="req-icon">🖥️</div>
-        </div>
-        <span class="req-badge badge-required">Required</span>
-      </div>
-      <h4>Windows PC</h4>
+      <div class="req-item-top"><h4>Windows PC</h4><span class="req-badge badge-required">Required</span></div>
       <p>Streamerbot is Windows-only. This suite does not work on Mac or Linux. You need to be running Windows 10 or 11.</p>
     </div>
 
     <div class="req-item">
-      <div class="req-item-top">
-        <div><div class="req-icon">🤖</div></div>
-        <span class="req-badge badge-free">Free</span>
-      </div>
-      <h4>Streamerbot</h4>
+      <div class="req-item-top"><h4>Streamerbot</h4><span class="req-badge badge-free">Free</span></div>
       <p>The automation hub everything runs through. Free to download at <a href="https://streamerbot.github.io/client/" target="_blank">streamerbot.github.io</a>. You need to have it installed and connected to your Twitch account before setup.</p>
     </div>
 
     <div class="req-item">
-      <div class="req-item-top">
-        <div><div class="req-icon">🐍</div></div>
-        <span class="req-badge badge-free">Free</span>
-      </div>
-      <h4>Python 3</h4>
-      <p>The installer and all AI scripts run on Python. Free at <a href="https://python.org" target="_blank">python.org</a>. You need to be comfortable opening a terminal and running a script — nothing beyond that.</p>
+      <div class="req-item-top"><h4>Python 3</h4><span class="req-badge badge-free">Free</span></div>
+      <p>The installer and all AI scripts run on Python. Free at <a href="https://python.org" target="_blank">python.org</a>. You need to be comfortable opening a terminal and running a script. Nothing beyond that.</p>
     </div>
 
     <div class="req-item">
-      <div class="req-item-top">
-        <div><div class="req-icon">🔑</div></div>
-        <span class="req-badge badge-ongoing">Ongoing Cost</span>
-      </div>
-      <h4>OpenAI Account + API Key</h4>
-      <p>Required for all AI features. Create an account at <a href="https://platform.openai.com" target="_blank">platform.openai.com</a> and add a payment method. The API key is entered during setup — the suite handles everything else.</p>
+      <div class="req-item-top"><h4>OpenAI Account + API Key</h4><span class="req-badge badge-ongoing">Ongoing cost</span></div>
+      <p>Required for all AI features. Create an account at <a href="https://platform.openai.com" target="_blank">platform.openai.com</a> and add a payment method. The API key is entered during setup, and the suite handles everything else.</p>
     </div>
   </div>
 
   <div class="cost-callout">
-    <div class="cost-callout-icon">💡</div>
+    
     <div>
       <h4>About OpenAI API costs</h4>
-      <p>StreamGPT Suite costs $15 once. The OpenAI API is separate — you pay OpenAI directly for usage. GPT-4o-mini is extremely affordable; most streamers spend <strong style="color:#f0a000;">$1–3/month</strong> depending on how active their chat is. You're billed only for what you use, and you can set a monthly spend limit in your OpenAI account dashboard.</p>
+      <p>StreamGPT Suite costs $15 once. The OpenAI API is separate: you pay OpenAI directly for usage. GPT-4o-mini is extremely affordable; most streamers spend <strong>$1 to $3 a month</strong> depending on how active their chat is. You're billed only for what you use, and you can set a monthly spend limit in your OpenAI account dashboard.</p>
     </div>
   </div>
 
@@ -214,32 +159,28 @@
       <div class="skill-dot empty"></div>
       <div class="skill-dot empty"></div>
     </div>
-    <p><strong>Comfort level: Beginner–Intermediate.</strong> If you've ever installed software, run a script, or followed a technical setup guide, you can do this. The installer handles the hard parts — you answer prompts, it configures everything. A detailed setup guide is included.</p>
+    <p><strong>Comfort level: Beginner to Intermediate.</strong> If you've ever installed software, run a script, or followed a technical setup guide, you can do this. The installer handles the hard parts: you answer prompts, and it configures everything. A detailed setup guide is included.</p>
   </div>
 </section>
 
-<section id="install" style="max-width:800px;">
-  <div class="section-title">Get set up in minutes</div>
-  <div class="section-sub">You need Streamerbot, Python 3, and an OpenAI API key.</div>
+<section class="block" id="install">
+  <h2 class="section-title">Get set up in minutes</h2>
+  <p class="section-sub">You need Streamerbot, Python 3, and an OpenAI API key.</p>
   <div class="steps">
-    <div class="step"><div class="step-num">1</div><div><h4>Purchase and download</h4><p>Get StreamGPT Suite on <a href="https://ko-fi.com/s/411278a4de" target="_blank">Ko-fi</a>. Your download includes the installer and setup guide — everything you need.</p></div></div>
-    <div class="step"><div class="step-num">2</div><div><h4>Run the installer</h4><p>Open a terminal and run <code>python StreamGPT_Suite_Setup_v0.9-beta.py</code>. Answer the prompts — your API key, streamer name, currency name, emotes, and which systems to install.</p></div></div>
+    <div class="step"><div class="step-num">1</div><div><h4>Purchase and download</h4><p>Get StreamGPT Suite on <a href="https://ko-fi.com/s/411278a4de" target="_blank">Ko-fi</a>. Your download includes the installer and setup guide, so you have everything you need.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div><h4>Run the installer</h4><p>Open a terminal and run <code>python StreamGPT_Suite_Setup_v0.9-beta.py</code>. Answer the prompts: your API key, streamer name, currency name, emotes, and which systems to install.</p></div></div>
     <div class="step"><div class="step-num">3</div><div><h4>Import into Streamerbot</h4><p>Open Streamerbot → Import → select <code>StreamGPT_Suite_Import.json</code>. All 124 actions are created automatically.</p></div></div>
-    <div class="step"><div class="step-num">4</div><div><h4>Compile and go live</h4><p>Open each <code>Execute - #Code</code> action and click Save and Compile. Type <code>!balance</code> in chat — if the bot responds, you're live.</p></div></div>
+    <div class="step"><div class="step-num">4</div><div><h4>Compile and go live</h4><p>Open each <code>Execute - #Code</code> action and click Save and Compile. Type <code>!balance</code> in chat. If the bot responds, you're live.</p></div></div>
   </div>
 </section>
 
-<div class="cta">
-  <h2>Ready to upgrade your stream?</h2>
-  <p>Pay once. No subscriptions. No monthly fees. Built by a streamer for streamers.</p>
-  <div class="hero-btns">
-    <a href="https://ko-fi.com/s/411278a4de" target="_blank" class="btn btn-primary">Get StreamGPT Suite — $15</a>
-    <a href="https://twitch.tv/coopgg_" target="_blank" class="btn btn-secondary">Watch it live</a>
-  </div>
+<section class="cta block"><div class="panel cta-box"><div><h2 class="section-title">Ready to upgrade your stream?</h2><p class="section-sub">Pay once. No subscriptions. No monthly fees. Built by a streamer for streamers.</p></div><div class="hero-actions"><a href="https://ko-fi.com/s/411278a4de" target="_blank" rel="noopener" class="btn">Get StreamGPT Suite for $15</a><a href="https://twitch.tv/coopgg_" target="_blank" rel="noopener" class="btn btn-ghost">Watch it live</a></div></div></section>  </main>
 </div>
-
 <footer>
-  <p>Made by <a href="https://twitch.tv/coopgg_" target="_blank">CoopGG</a> &bull; Powered by OpenAI + Streamerbot</p>
+  <div class="wrap">
+    <span>Made by <a href="https://twitch.tv/coopgg_" target="_blank" rel="noopener">CoopGG</a></span>
+    <span>Powered by OpenAI and Streamerbot</span>
+  </div>
 </footer>
 </body>
 </html>
