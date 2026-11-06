@@ -49,7 +49,6 @@
   </section>
   <main id="main">
 
-  <!-- BEFORE YOU BUY -->
   <div class="faq-section">
     <h2 class="faq-section-title">Before You Buy</h2>
 
@@ -60,7 +59,7 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p><strong>No. Windows only.</strong> Streamerbot is a Windows application and is the core hub that StreamGPT Suite runs through. If you're on Mac or Linux, this product isn't for you.</p>
+          <p><strong>No. Windows only.</strong> Streamer.bot is a Windows application and is the hub that StreamGPT Suite runs inside. If you are on Mac or Linux, this product isn't for you.</p>
         </div>
       </div>
     </div>
@@ -72,27 +71,38 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Not really. You need to be comfortable opening a terminal and running a single command, and that's the extent of it. The installer walks you through everything step by step and configures all files automatically. A detailed setup guide is included in the download.</p>
-          <p>That said, if you've never touched a terminal in your life and the idea makes you nervous, expect to spend some extra time getting comfortable. It's genuinely not hard, but it's not a one-click app either.</p>
+          <p>No. Setup is three steps: copy a folder, put your OpenAI key and names into a text file, and import one file into Streamer.bot. A detailed setup guide is included in the download.</p><p>If you have never imported anything into Streamer.bot before, expect to spend a little extra time the first time. It is genuinely not hard, but it is not a one-click app either.</p>
         </div>
       </div>
     </div>
 
     <div class="faq-item">
       <button class="faq-question">
-        Do I need Streamerbot already installed?
+        Do I need to install Python?
         <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Yes. Streamerbot needs to be installed and connected to your Twitch account before you run the StreamGPT Suite installer. The installer generates a Streamerbot import file, so you'll need Streamerbot open to import it. It's free at <a href="https://streamerbot.github.io/client/" target="_blank">streamerbot.github.io</a>.</p>
+          <p>No. Everything runs as C# inside Streamer.bot, so there is nothing to install besides Streamer.bot itself. The settings file is named <code>config.py</code>, but it is just a text file you edit in any text editor. Python is not involved.</p>
         </div>
       </div>
     </div>
 
     <div class="faq-item">
       <button class="faq-question">
-        What if I already have Streamerbot actions set up?
+        Do I need Streamer.bot already installed?
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <div class="faq-answer-inner">
+          <p>Yes. Streamer.bot needs to be installed and connected to your Twitch account before you import the suite. It is free at <a href="https://streamerbot.github.io/client/" target="_blank" rel="noopener">streamerbot.github.io</a>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question">
+        What if I already have Streamer.bot actions set up?
         <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="faq-answer">
@@ -109,14 +119,12 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Yes. You can use any bot account already connected to Streamerbot, or your main account if you prefer. The suite sends chat messages through whatever account Streamerbot is configured to use. No changes needed on that front.</p>
+          <p>Yes. You can use any bot account already connected to Streamer.bot, or your main account if you prefer. The suite sends chat messages through whatever account Streamer.bot is configured to use. No changes needed on that front.</p>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- PRICING & UPDATES -->
   <div class="faq-section">
     <h2 class="faq-section-title">Pricing &amp; Updates</h2>
 
@@ -127,8 +135,7 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Yes, $15 to StreamGPT Suite is a one-time purchase. No subscription, no renewal, no license key. You own it.</p>
-          <p>The only ongoing cost is your OpenAI API usage, which you pay directly to OpenAI, not to StreamGPT Suite. See the question below for what that typically costs.</p>
+          <p>Yes, $15 to StreamGPT Suite is a one-time purchase. No subscription, no renewal, no license key. You own it. The only ongoing cost is your OpenAI API usage, which you pay directly to OpenAI, not to StreamGPT Suite. See the question below for what that typically costs.</p>
         </div>
       </div>
     </div>
@@ -140,9 +147,7 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>StreamGPT Suite uses <strong>GPT-4o-mini</strong>, which is OpenAI's most affordable model. For a typical stream, with a few hours and active-ish chat, most users spend somewhere between <strong>$1 and $3 per month</strong>. Very active, longer streams could push that higher, but it stays low.</p>
-          <p>You can set a monthly spend limit in your <a href="https://platform.openai.com/account/limits" target="_blank">OpenAI account settings</a> so there are no surprises. If you hit the limit, AI features stop responding until the next billing cycle. Your stream won't break, commands just won't fire.</p>
-          <div class="callout"><strong>New accounts get a free credit.</strong> OpenAI typically gives new accounts a small free credit when you sign up, so your first few streams may cost nothing at all.</div>
+          <p>StreamGPT Suite uses <strong>GPT-4o-mini</strong>, which is OpenAI's most affordable model. For a typical stream, with a few hours and active-ish chat, most users spend somewhere between <strong>$1 and $3 per month</strong>. Very active, longer streams could push that higher, but it stays low.</p><p>You can set a monthly spend limit in your <a href="https://platform.openai.com/account/limits" target="_blank" rel="noopener">OpenAI account settings</a> so there are no surprises. If you hit the limit, AI features stop responding until the next billing cycle. Your stream won't break, and each feature falls back to built-in text. The suite also limits itself to 30 AI requests a minute, so a runaway loop can't run up your bill. OpenAI sometimes gives new accounts a small free credit, so your first few streams may cost nothing at all.</p>
         </div>
       </div>
     </div>
@@ -154,7 +159,7 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Yes. All future updates are included with your purchase. When a new version is released, you'll be able to download it from Ko-fi at no additional charge.</p>
+          <p>Yes. All future updates are included with your purchase. When a new version is released, you will be able to download it from Ko-fi at no additional charge.</p>
         </div>
       </div>
     </div>
@@ -166,15 +171,12 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Because this is a digital product, refunds aren't offered once the file has been downloaded. If you run into trouble getting set up, reach out on Discord first. Most issues are solvable and support is available.</p>
-          <p>Before purchasing, make sure you meet the <a href="index.html#requirements">requirements</a>, particularly Windows + Streamerbot. Those are the most common reasons someone can't use it.</p>
+          <p>Because this is a digital product, refunds aren't offered once the file has been downloaded. If you run into trouble getting set up, reach out on Discord first. Most issues are solvable and support is available.</p><p>Before purchasing, make sure you meet the <a href="index.html#requirements">requirements</a>, particularly Windows and Streamer.bot. Those are the most common reasons someone can't use it.</p>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- SETUP -->
   <div class="faq-section">
     <h2 class="faq-section-title">Setup &amp; Installation</h2>
 
@@ -185,57 +187,48 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>If you have everything ready (Streamerbot installed, Python 3 installed, OpenAI API key in hand), the installer itself runs in about 5 minutes. The full process including Streamerbot import and compile is typically <strong>15–30 minutes</strong> for first-timers following the setup guide.</p>
+          <p>If you have Streamer.bot installed and your OpenAI API key in hand, it is typically 15 to 30 minutes for first-timers following the setup guide: copy the folder, fill in the settings file, import the file and test it.</p>
         </div>
       </div>
     </div>
 
     <div class="faq-item">
       <button class="faq-question">
-        Can I install only some systems, not all of them?
+        What goes in the settings file?
         <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Yes. The installer asks you which systems you want to include, and only installs what you select. You're not forced to take all 22 systems. You can always re-run the installer later to add systems you skipped.</p>
+          <p>Your OpenAI API key, your streamer and bot names, your currency name and your emotes, plus optional settings like your time zone, game timers and coin rewards. Every setting has a comment next to it explaining what it does.</p>
         </div>
       </div>
     </div>
 
     <div class="faq-item">
       <button class="faq-question">
-        I already have Python installed. Do I need to do anything special?
+        What does the import add to Streamer.bot?
         <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Nope. As long as you have Python 3 installed and it's accessible from your terminal (i.e. <code>python --version</code> returns something), you're good. The installer will handle the rest including installing the required Python packages.</p>
+          <p>113 actions and 94 commands with their triggers already set. Importing doesn't change any of your existing actions. A few actions, like the channel point ones, need you to attach your own reward as the trigger.</p>
         </div>
       </div>
     </div>
 
     <div class="faq-item">
       <button class="faq-question">
-        What does the installer actually do?
+        Can I use only some of the systems?
         <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>It collects your settings upfront (API key, streamer name, bot name, currency name, custom emotes, and which systems to install) and then does the following:</p>
-          <ul>
-            <li>Creates the <code>C:\StreamGPT</code> folder structure</li>
-            <li>Copies and configures all Python scripts with your settings</li>
-            <li>Generates the Streamerbot import file (<code>StreamGPT_Suite_Import.json</code>)</li>
-            <li>Installs required Python packages automatically</li>
-          </ul>
-          <p style="margin-top:0.75rem;">Nothing is written to your system until you review a full summary and confirm.</p>
+          <p>Yes. After importing, disable or delete any actions or commands you don't want. Most features are independent. Two are shared by the rest: the AI core, which everything AI-written goes through, and the coin system, which the games pay out through. Keep those two and remove the rest as you like.</p>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- USING THE SUITE -->
   <div class="faq-section">
     <h2 class="faq-section-title">Using the Suite</h2>
 
@@ -246,19 +239,19 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Yes. Every Python script has a system prompt at the top that tells the AI how to behave for that feature. You can edit these directly to change the tone, personality, length of responses, or any other instructions. No programming required, just text editing.</p>
+          <p>Yes. Each AI feature keeps its instructions as plain English text inside its Execute C# step in Streamer.bot. Open the action, edit the text that tells the AI how to behave, and press Save and Compile. You can change the tone, personality, length of responses, or any other instruction. No programming required, just text editing.</p>
         </div>
       </div>
     </div>
 
     <div class="faq-item">
       <button class="faq-question">
-        What if I need to change my streamer name, bot name, or emotes after installing?
+        What if I need to change my streamer name, bot name, or emotes later?
         <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>All shared settings live in a single <code>config.py</code> file at <code>C:\StreamGPT\config.py</code>. Open it in any text editor, update the values you need to change, and save. The scripts read from that file at runtime, so changes take effect immediately, with no reinstall needed.</p>
+          <p>All shared settings live in one file, <code>C:\StreamGPT\config.py</code>. Open it in any text editor, change the values you need, and save. The suite reads that file as it runs, so there is no need to reinstall or reimport.</p>
         </div>
       </div>
     </div>
@@ -270,7 +263,7 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Yes. There's a toggle in <code>config.py</code> (<code>SO_FALLBACK_ONLY</code>) that switches all AI systems to their static fallback responses. Useful if you're temporarily over budget on API usage, having API issues, or just want a break from AI responses without disabling anything.</p>
+          <p>Yes. Set <code>FALLBACK_ONLY = True</code> in <code>config.py</code> and every AI feature switches to its built-in fallback text without calling OpenAI. Useful if you are over budget, having API issues, or just want a break from AI responses without disabling anything.</p>
         </div>
       </div>
     </div>
@@ -282,32 +275,23 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Just Streamerbot. That's it. The Python scripts are launched automatically by Streamerbot in the background when commands are triggered. You don't need to keep any extra windows open or run anything manually before going live.</p>
+          <p>Just Streamer.bot. That's it. The suite runs inside it, so there are no extra windows or programs to start before you go live.</p>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- TROUBLESHOOTING -->
   <div class="faq-section">
     <h2 class="faq-section-title">Troubleshooting</h2>
 
     <div class="faq-item">
       <button class="faq-question">
-        Something isn't working after install: where do I start?
+        Something isn't working after setup: where do I start?
         <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Start with these in order:</p>
-          <ul>
-            <li>Check the Streamerbot action log. It shows exactly which sub-actions ran and what failed</li>
-            <li>Make sure you clicked <strong>Save and Compile</strong> on every <code>Execute - #Code</code> action in Streamerbot</li>
-            <li>Confirm your OpenAI API key is correct and your account has billing enabled</li>
-            <li>Check that <code>C:\StreamGPT</code> exists and the scripts are in the right subfolders</li>
-          </ul>
-          <p style="margin-top:0.75rem;">The setup guide includes a troubleshooting section with the most common issues and fixes. If you're still stuck, bring the Streamerbot log to the Discord and someone can help.</p>
+          <p>Start with these in order:</p><ul><li>Check the Streamer.bot action log. It shows exactly which sub-actions ran and what failed</li><li>Confirm your OpenAI API key is correct and your account has billing enabled</li><li>Check that <code>C:\StreamGPT</code> exists and contains <code>config.py</code></li><li>If an action reports a compile error, open it in Streamer.bot and press <strong>Save and Compile</strong></li></ul><p>The setup guide includes a troubleshooting section with the most common issues and fixes. If you're still stuck, bring the Streamer.bot log to the Discord and someone can help.</p>
         </div>
       </div>
     </div>
@@ -319,12 +303,7 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <ul>
-            <li><strong>Billing enabled?</strong> New API accounts need a payment method added at <a href="https://platform.openai.com/account/billing" target="_blank">platform.openai.com/account/billing</a> before the key works</li>
-            <li><strong>Key copied correctly?</strong> Open <code>C:\StreamGPT\config.py</code> and confirm the key is there, no extra spaces or missing characters</li>
-            <li><strong>Monthly limit hit?</strong> Check your usage at <a href="https://platform.openai.com/usage" target="_blank">platform.openai.com/usage</a></li>
-            <li><strong>Key revoked?</strong> Old keys can be deactivated, so generate a new one at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a> and update <code>config.py</code></li>
-          </ul>
+          <ul><li><strong>Billing enabled?</strong> New API accounts need a payment method added at platform.openai.com/account/billing before the key works</li><li><strong>Key copied correctly?</strong> Open <code>C:\StreamGPT\config.py</code> and confirm the key is there, with no extra spaces or missing characters</li><li><strong>Monthly limit hit?</strong> Check your usage at platform.openai.com/usage</li><li><strong>Key revoked?</strong> Old keys can be deactivated, so generate a new one at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> and update <code>config.py</code></li></ul>
         </div>
       </div>
     </div>
@@ -336,16 +315,10 @@
       </button>
       <div class="faq-answer">
         <div class="faq-answer-inner">
-          <p>Usually one of three things:</p>
-          <ul>
-            <li>The action for that command wasn't compiled: open it in Streamerbot and hit <strong>Save and Compile</strong></li>
-            <li>The command trigger in Streamerbot is disabled or set to the wrong prefix</li>
-            <li>You opted out of that system during installation: check <code>C:\StreamGPT</code> to see if the relevant script folder exists</li>
-          </ul>
+          <p>Usually one of three things:</p><ul><li>The action for that command wasn't compiled: open it in Streamer.bot and press <strong>Save and Compile</strong></li><li>The command is disabled in Streamer.bot, or uses a different prefix</li><li>That feature's actions were disabled or deleted after the import</li></ul>
         </div>
       </div>
     </div>
-
   </div>
 
   <div class="still-stuck">

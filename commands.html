@@ -32,6 +32,7 @@
   .badge-coins { color: var(--coin); background: var(--coin-soft); border-color: var(--coin-line); }
   .badge-points { color: var(--point); background: var(--point-soft); border-color: var(--point-line); }
   .badge-destiny { color: var(--destiny); background: var(--destiny-soft); border-color: var(--destiny-line); }
+  .badge-streamer { color: var(--accent-text); background: var(--accent-soft); border-color: rgba(255, 90, 90, 0.4); }
   .badge-mod { color: var(--mod); background: var(--mod-soft); border-color: rgba(255, 196, 107, 0.35); }
   .cmd-desc { color: var(--text); max-width: 62ch; }
   .cmd-example { margin-top: 0.4rem; font-size: 0.82rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
@@ -52,384 +53,121 @@
   <section class="page-hero hero">
     <p class="eyebrow">Command reference</p>
     <h1>Chat commands</h1>
-    <p class="lede">Everything the Coop Troop can do, organized by category, with usage examples for anything that needs a target or input.</p>
+    <p class="lede">Every chat command that ships with StreamGPT Suite, organized by category. Brackets mean optional.</p>
   </section>
   <nav aria-label="Categories"><div class="jump-nav">
-  <a href="#ai-chat" class="jump-pill">AI Chat</a>
+  <a href="#ai" class="jump-pill">AI and Chat Fun</a>
   <a href="#games" class="jump-pill">Chat Games</a>
-  <a href="#destiny" class="jump-pill">Destiny</a>
-  <a href="#social" class="jump-pill">Social</a>
   <a href="#coins" class="jump-pill">Coins</a>
-  <a href="#events" class="jump-pill">Events</a>
-  <a href="#quotes" class="jump-pill">Quotes</a>
-  <a href="#info" class="jump-pill">Stream Info</a>
-  <a href="#vip" class="jump-pill">VIP</a>
-  <a href="#music" class="jump-pill">Music</a>
-</div></nav>
+  <a href="#pokemon" class="jump-pill">Pokémon</a>
+  <a href="#community" class="jump-pill">Community</a>
+  <a href="#mods" class="jump-pill">Moderators</a></div></nav>
   <main id="main">
-
-  <section class="category" id="ai-chat">
-    <div class="cat-head">
-      <h2 class="cat-title">AI Chat</h2>
-      <span class="cat-sub">Powered by CoopGPT</span>
-    </div>
+  <section class="category" id="ai">
+    <div class="cat-head"><h2 class="cat-title">AI and Chat Fun</h2><span class="cat-sub">Powered by your bot</span></div>
     <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!coopgpt</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Learn what CoopGPT can do and get a quick rundown of active commands.</div>
-        </div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!botname</code></div><div class="cmd-body"><div class="cmd-desc">A short tour of the bot: games, coins and social commands. The command matches the bot name you set in config.py.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">@botname</code><code class="arg">[message]</code></div><div class="cmd-body"><div class="cmd-desc">Mention the bot in chat and it replies to you. It answers to the bot name you set in config.py.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!lurk</code> <span class="or">or</span> <code class="cmd">!brb</code></div><div class="cmd-body"><div class="cmd-desc">Let chat know you are away. The bot sends you off in style.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!8ball</code><code class="arg">[question]</code></div><div class="cmd-body"><div class="cmd-desc">Ask the magic 8 ball.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!towerthought</code></div><div class="cmd-body"><div class="cmd-desc">A funny shower thought written by the AI.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!roast</code><code class="arg">[@user]</code></div><div class="cmd-body"><div class="cmd-desc">A playful roast. Leave the name off and a random viewer gets it.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!ship</code><code class="arg">@user</code><code class="arg">[@user]</code></div><div class="cmd-body"><div class="cmd-desc">A friendship compatibility score for two chatters. The same pair always gets the same score.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!fortune</code></div><div class="cmd-body"><div class="cmd-desc">Your fortune-cookie fortune, with a lucky number.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!cookie</code> <span class="or">or</span> <code class="cmd">!slap</code> <span class="or">or</span> <code class="cmd">!hug</code> <span class="or">or</span> <code class="cmd">!fart</code> <span class="or">or</span> <code class="cmd">!corner</code> <span class="or">or</span> <code class="cmd">!ban</code></div><div class="cmd-body"><div class="cmd-desc">Aim it at a chatter with an @name, or leave it off for a random one. The ban is fake. Nobody is actually banned.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!HBD</code><code class="arg">[@user]</code> <span class="or">or</span> <code class="cmd">!HappyBirthday</code></div><div class="cmd-body"><div class="cmd-desc">Wish a happy birthday to someone.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!dadjoke</code></div><div class="cmd-body"><div class="cmd-desc">A random dad joke.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!funfact</code></div><div class="cmd-body"><div class="cmd-desc">A random fun fact.</div></div></div>
       </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax">
-          <code class="cmd">!shoutout</code>
-          <code class="arg">@user</code>
-          <span class="badge badge-mod">Mod</span>
-        </div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Generates an AI-powered shoutout for a streamer. Pulls their info and writes something fresh every time. Mod and broadcaster only.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!shoutout @SomeStreamer</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!lurk</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Let chat know you're stepping away but still supporting the stream. The lurk is acknowledged. You are seen.</div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <section class="category" id="games">
-    <div class="cat-head">
-      <h2 class="cat-title">Chat Games</h2>
-      <span class="cat-sub">Win Coop Coins</span>
-    </div>
+    <div class="cat-head"><h2 class="cat-title">Chat Games</h2><span class="cat-sub">Win coins</span></div>
     <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!trivia</code><span class="badge badge-coins">Coins</span></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Starts an AI-generated trivia question. First person to type the correct answer in chat wins coins. You have 30 seconds.</div>
-        </div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!trivia</code></div><div class="cmd-body"><div class="cmd-desc">Multiple choice trivia. Answer A, B, C or D within 30 seconds.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!riddle</code></div><div class="cmd-body"><div class="cmd-desc">A riddle to solve. Close answers count.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!quickmath</code></div><div class="cmd-body"><div class="cmd-desc">Solve the math problem before time runs out.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!capitals</code></div><div class="cmd-body"><div class="cmd-desc">US state capitals quiz. Answer A, B, C or D.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!madlib</code></div><div class="cmd-body"><div class="cmd-desc">Everyone adds words to build a Mad Lib. Contributors earn coins.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!cyoa</code></div><div class="cmd-body"><div class="cmd-desc">Choose Your Own Adventure. Vote 1, 2 or 3 to steer the story.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!20q</code></div><div class="cmd-body"><div class="cmd-desc">20 Questions: the bot picks something and chat asks yes or no questions.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!ask</code><code class="arg">[question]</code> <span class="or">or</span> <code class="cmd">!guess</code><code class="arg">[answer]</code></div><div class="cmd-body"><div class="cmd-desc">How you play 20 Questions: ask a question, or make a guess.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!end20q</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">End a 20 Questions game early.</div></div></div>
       </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!riddle</code><span class="badge badge-coins">Coins</span></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Starts an AI riddle. Think it through. The first correct answer wins coins. You have 60 seconds.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!madlibs</code><span class="badge badge-coins">Coins</span></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Starts a Mad Libs game. Chat fills in words one at a time: noun, verb, adjective, celebrity, place, silly sound. The AI weaves them into a story and reads it to chat. Everyone who contributes earns coins.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!20q</code><span class="badge badge-coins">Coins</span></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Starts a round of 20 Questions. The AI picks something: a person, place, or thing. Chat asks yes/no questions to narrow it down. First person to guess correctly wins coins.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!capitals</code><span class="badge badge-coins">Coins</span></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Starts a US state capitals quiz. The bot names a state. The first to type the correct capital wins coins.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!cyoa</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Starts a Choose Your Own Adventure. The AI writes a story and chat votes on what happens next. The story evolves based on whatever the Coop Troop decides.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!8ball</code><code class="arg">question</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Consult the magic 8-ball. It knows things. It does not explain itself.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!8ball Will I hit Diamond this season?</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!quickmath</code><span class="badge badge-coins">Coins</span></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">A math problem drops in chat. Type only the number. The fastest correct answer wins coins.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!chuck</code></div>
-        <div class="cmd-body"><div class="cmd-desc">Delivers a random Chuck Norris fact. Every single one is true.</div></div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!dadjoke</code></div>
-        <div class="cmd-body"><div class="cmd-desc">Get a dad joke. It will be terrible. You asked for this.</div></div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!funfact</code></div>
-        <div class="cmd-body"><div class="cmd-desc">Get a random fun fact. Educational content. Technically.</div></div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!darkjoke</code></div>
-        <div class="cmd-body"><div class="cmd-desc">Get a dark joke. These go places. Viewer discretion advised.</div></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="category" id="destiny">
-    <div class="cat-head">
-      <h2 class="cat-title">Destiny</h2>
-      <span class="cat-sub">Active during Destiny 2 streams</span>
-    </div>
-    <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!towerthought</code><span class="badge badge-destiny">Destiny</span></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Summons a Destiny-themed shower thought from the Tower. The kind that makes you stare at the ceiling for five minutes thinking about Ghosts and the Vex.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!rallyflag</code><span class="badge badge-destiny">Destiny</span></div>
-        <div class="cmd-body"><div class="cmd-desc">Rally to the flag. You know what to do.</div></div>
-      </div>
-    </div>
-    <div class="note"><strong>Destiny streams only.</strong> These commands are active when CoopGG is live on Destiny 2.</div>
-  </section>
-
-  <section class="category" id="social">
-    <div class="cat-head">
-      <h2 class="cat-title">Social</h2>
-      <span class="cat-sub">For when words aren't enough</span>
-    </div>
-    <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!cookie</code><code class="arg">@user</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Give someone a cookie. A kind gesture for a kind person.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!cookie @CoopGG_</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!hug</code><code class="arg">@user</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Give someone a hug. Wholesome content only.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!hug @CoopGG_</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!slap</code><code class="arg">@user</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Slap someone. They probably deserve it.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!slap @CoopGG_</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!fart</code><code class="arg">@user</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Let one rip in someone's direction. A devastating social maneuver.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!fart @CoopGG_</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!corner</code><code class="arg">@user</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Put someone in the corner. They know what they did.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!corner @CoopGG_</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!ban</code><code class="arg">@user</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Fake ban someone from the stream. Not real. Do not panic.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!ban @CoopGG_</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!roast</code><code class="arg">@user</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Get an AI roast delivered to a viewer. Leave out <code class="arg">@user</code> to roast yourself. CoopGPT has no mercy either way.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!roast @CoopGG_</span>&nbsp;·&nbsp;<span class="ex-code">!roast</span></div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <section class="category" id="coins">
-    <div class="cat-head">
-      <h2 class="cat-title">Coins &amp; Economy</h2>
-      <span class="cat-sub">Earn and spend Coop Coins</span>
-    </div>
+    <div class="cat-head"><h2 class="cat-title">Coins</h2><span class="cat-sub">Name set in config.py</span></div>
     <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!earnCoins</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Learn how to earn Coop Coins by watching, winning chat games, and participating in stream events.</div>
-        </div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!balance</code></div><div class="cmd-body"><div class="cmd-desc">Your coin balance.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!leaderboard</code></div><div class="cmd-body"><div class="cmd-desc">The top coin holders.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!earnCoins</code></div><div class="cmd-body"><div class="cmd-desc">Every way to earn coins.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!daily</code></div><div class="cmd-body"><div class="cmd-desc">Claim your daily coins. Claiming on back-to-back days builds a streak bonus.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!give</code><code class="arg">@user</code><code class="arg">[amount]</code></div><div class="cmd-body"><div class="cmd-desc">Send some of your coins to another viewer.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!gamble</code><code class="arg">[amount]</code></div><div class="cmd-body"><div class="cmd-desc">Spin the slot machine with a bet. Minimum 10 coins.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!heist</code><code class="arg">[amount]</code></div><div class="cmd-body"><div class="cmd-desc">Start a crew heist. Others have 60 seconds to join with !heistjoin. By default half of heists succeed and pay double, and the AI writes the story.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!heistjoin</code><code class="arg">[amount]</code></div><div class="cmd-body"><div class="cmd-desc">Join a heist that is recruiting. Minimum bet 100.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!duel</code><code class="arg">@user</code><code class="arg">[amount]</code></div><div class="cmd-body"><div class="cmd-desc">Challenge someone for coins. They answer with !duel accept or !duel decline.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!bet</code><code class="arg">[option]</code><code class="arg">[amount]</code></div><div class="cmd-body"><div class="cmd-desc">Bet on a running prediction.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!predict</code></div><div class="cmd-body"><div class="cmd-desc">See the running prediction. Mods start, lock and pay out predictions.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!addCoins</code><code class="arg">@user</code><code class="arg">[amount]</code> <span class="or">or</span> <code class="cmd">!setCoins</code><code class="arg">@user</code><code class="arg">[amount]</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Add to, or set, a viewer&#x27;s balance.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!resetAllCoins</code><span class="badge badge-streamer">Streamer</span></div><div class="cmd-body"><div class="cmd-desc">Reset every balance to zero.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!rank</code><code class="arg">[@user]</code></div><div class="cmd-body"><div class="cmd-desc">A one-line profile: coin rank, Pokédex count and daily streak.</div></div></div>
       </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!balance</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Check your current Coop Coin balance. Know your numbers.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!give</code><code class="arg">@user</code><code class="arg">amount</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Give some of your Coop Coins to another viewer. Generosity is valid.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!give @CoopGG_ 100</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!gamble</code><code class="arg">amount</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Gamble some of your Coop Coins. Double up or lose it all. That's the game.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!gamble 200</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!heist</code><code class="arg">amount</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Start or join a coin heist. Put some coins in, and if the heist succeeds, everyone walks away with more. If it fails, well.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!heist 500</span></div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!leaderboard</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">See the top Coop Coin holders. Clout, measured in fake money.</div>
-        </div>
-      </div>
-    </div>
-    <div class="note">Coop Coins are earned automatically while watching and by winning chat games. The more you participate, the more you earn.</div>
   </section>
 
-  <section class="category" id="events">
-    <div class="cat-head">
-      <h2 class="cat-title">Events</h2>
-      <span class="cat-sub">Raffles, giveaways &amp; viewer queue</span>
-    </div>
+  <section class="category" id="pokemon">
+    <div class="cat-head"><h2 class="cat-title">Pokémon</h2><span class="cat-sub">Catch them all</span></div>
     <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!raffle</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Enter the current raffle when one is running. CoopGG or a mod will announce when a raffle is open and what the prize is. One entry per viewer.</div>
-        </div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!pokemon</code></div><div class="cmd-body"><div class="cmd-desc">A wild Pokémon appears. Everyone gets a short window to throw a ball.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!pokeball</code><code class="arg">[type]</code></div><div class="cmd-body"><div class="cmd-desc">Throw a ball. Name a bought ball type for better odds.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!pokedex</code><code class="arg">[@user]</code></div><div class="cmd-body"><div class="cmd-desc">Your catch count. Add top for the leaderboard.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!pokebox</code><code class="arg">[@user]</code></div><div class="cmd-body"><div class="cmd-desc">The Pokémon you own. Add dupes to see spares.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!shop</code> <span class="or">or</span> <code class="cmd">!buyball</code><code class="arg">[type]</code><code class="arg">[amount]</code> <span class="or">or</span> <code class="cmd">!balls</code></div><div class="cmd-body"><div class="cmd-desc">See ball prices, buy balls with coins, and check how many you have.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!trade</code><code class="arg">@user</code><code class="arg">[yours]</code><code class="arg">for</code><code class="arg">[theirs]</code></div><div class="cmd-body"><div class="cmd-desc">Offer a swap. They answer with !accept or !decline.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!accept</code> <span class="or">or</span> <code class="cmd">!decline</code></div><div class="cmd-body"><div class="cmd-desc">Answer a trade offer.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!partner</code><code class="arg">[name]</code></div><div class="cmd-body"><div class="cmd-desc">Pick a Pokémon you own to show next to your name.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!sell</code><code class="arg">[name]</code> <span class="or">or</span> <code class="cmd">!release</code><code class="arg">[name]</code></div><div class="cmd-body"><div class="cmd-desc">Sell spare copies for coins. You always keep one of each, and shinies are never sold.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!pokeevent</code></div><div class="cmd-body"><div class="cmd-desc">Is a special event, like Shiny Hour, running? Mods can start or stop one.</div></div></div>
       </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!giveaway</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Enter the current giveaway when one is active. Watch for CoopGG's announcement in chat. Giveaways are announced with instructions before entries open.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!join</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Add yourself to the viewer play queue for Playing With Viewers sessions. CoopGG will announce when the queue is open and what game is being played.</div>
-        </div>
-      </div>
-    </div>
-    <div class="note">Raffle, giveaway, and viewer play sessions are announced live in chat. Watch for the announcement before using these commands.</div>
   </section>
 
-  <section class="category" id="quotes">
-    <div class="cat-head">
-      <h2 class="cat-title">Quotes</h2>
-      <span class="cat-sub">Stream memory</span>
-    </div>
+  <section class="category" id="community">
+    <div class="cat-head"><h2 class="cat-title">Community</h2><span class="cat-sub">Together</span></div>
     <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!quote</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Pulls a random saved quote from the stream archive. Things were said. They have been preserved.</div>
-        </div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!boss</code></div><div class="cmd-body"><div class="cmd-desc">Check the boss: health, time left and top damage dealers. Mods start the fight.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!attack</code></div><div class="cmd-body"><div class="cmd-desc">Hit the boss. It costs coins, and everyone who swung shares the loot if it goes down.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!addme</code> <span class="or">or</span> <code class="cmd">!removeme</code></div><div class="cmd-body"><div class="cmd-desc">Join or leave the queue to play with the streamer.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!queue</code> <span class="or">or</span> <code class="cmd">!showplayers</code></div><div class="cmd-body"><div class="cmd-desc">See who is in the queue and who is playing.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!enter</code></div><div class="cmd-body"><div class="cmd-desc">Enter the giveaway.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!enterraffle</code></div><div class="cmd-body"><div class="cmd-desc">Enter the raffle.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!birthday</code><code class="arg">[month/day]</code></div><div class="cmd-body"><div class="cmd-desc">Save your birthday, show it, or remove it. Month and day only. Get a greeting and a coin gift on the day.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!vipDays</code></div><div class="cmd-body"><div class="cmd-desc">How many days of timed VIP you have left.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!watchtime</code><code class="arg">[@user]</code></div><div class="cmd-body"><div class="cmd-desc">How long you have watched while the stream was live, and where you rank among viewers. Counting began when the feature was turned on.</div></div></div>
       </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax">
-          <code class="cmd">!addquote</code>
-          <code class="arg">text</code>
-          <span class="badge badge-mod">Mod</span>
-        </div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Saves a quote to the archive. Mod only, so the archive doesn't immediately become a chaos document.</div>
-          <div class="cmd-example"><span class="ex-label">ex</span><span class="ex-code">!addquote "I did not expect that" - CoopGG, 2024</span></div>
-        </div>
-      </div>
-    </div>
   </section>
 
-  <section class="category" id="info">
-    <div class="cat-head">
-      <h2 class="cat-title">Stream Info</h2>
-      <span class="cat-sub">Quick lookups</span>
-    </div>
+  <section class="category" id="mods">
+    <div class="cat-head"><h2 class="cat-title">Moderators</h2><span class="cat-sub">Mods and broadcaster only</span></div>
     <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!uptime</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">See how long the stream has been live. Useful for knowing how deep into the session we already are.</div>
-        </div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!so</code><code class="arg">@user</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Shout out another streamer with an AI-written message that mentions their game.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!permit</code><code class="arg">@user</code><code class="arg">[seconds]</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Let someone post links for a short time.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!strikes</code><code class="arg">[@user]</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">See who has chat strikes and what their next one costs.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!pardon</code><code class="arg">@user</code><code class="arg">[all]</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Remove a strike after a mistake, or all of them.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!updatetitle</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Change the stream title or game, or have the bot write a fresh title.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!startgiveaway</code><code class="arg">[prize]</code> <span class="or">or</span> <code class="cmd">!pickwinner</code> <span class="or">or</span> <code class="cmd">!clearentries</code> <span class="or">or</span> <code class="cmd">!giveawaystatus</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Run a giveaway.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!startraffle</code> <span class="or">or</span> <code class="cmd">!drawraffle</code> <span class="or">or</span> <code class="cmd">!clearraffle</code> <span class="or">or</span> <code class="cmd">!rafflestatus</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Run a raffle.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!addplayer</code> <span class="or">or</span> <code class="cmd">!nextplayer</code> <span class="or">or</span> <code class="cmd">!randomplayer</code> <span class="or">or</span> <code class="cmd">!removeactive</code> <span class="or">or</span> <code class="cmd">!replaceactive</code> <span class="or">or</span> <code class="cmd">!clearplayers</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Manage the play-with-viewers queue.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!predict</code><code class="arg">start</code> <span class="or">or</span> <code class="cmd">!predict</code><code class="arg">lock</code> <span class="or">or</span> <code class="cmd">!predict</code><code class="arg">win</code> <span class="or">or</span> <code class="cmd">!predict</code><code class="arg">cancel</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Run a coin prediction.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!boss</code><code class="arg">start</code><code class="arg">[minutes]</code> <span class="or">or</span> <code class="cmd">!boss</code><code class="arg">stop</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Start or call off a boss fight.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!addDays</code><code class="arg">@user</code><code class="arg">[n]</code> <span class="or">or</span> <code class="cmd">!takeVIP</code><code class="arg">@user</code> <span class="or">or</span> <code class="cmd">!logVIPs</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Manage timed VIPs.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!setbirthday</code><code class="arg">@user</code> <span class="or">or</span> <code class="cmd">!clearbirthday</code><code class="arg">@user</code> <span class="or">or</span> <code class="cmd">!birthdays</code><span class="badge badge-mod">Mod</span></div><div class="cmd-body"><div class="cmd-desc">Set, clear or list birthdays.</div></div></div>
+      <div class="cmd-row"><div class="cmd-syntax"><code class="cmd">!testalert</code><span class="badge badge-streamer">Streamer</span></div><div class="cmd-body"><div class="cmd-desc">Test an alert on stream.</div></div></div>
       </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!discord</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Get the link to the Coop Troop Discord. Come hang out between streams.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!rules</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Get the stream rules. Short version: be a normal person and everyone has a good time.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!deaths</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">See the current death count for the session. Sometimes the number is very high. We do not talk about it.</div>
-        </div>
-      </div>
-      <div class="cmd-row">
-        <div class="cmd-syntax">
-          <code class="cmd">!dead</code>
-          <span class="badge badge-mod">Mod</span>
-        </div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Increment the death counter by one. Mod only, because CoopGG will not be counting his own deaths.</div>
-        </div>
-      </div>
-    </div>
   </section>
 
-  <section class="category" id="vip">
-    <div class="cat-head">
-      <h2 class="cat-title">VIP</h2>
-      <span class="cat-sub">Channel Point Redemption</span>
-    </div>
-    <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">Timed VIP</code><span class="badge badge-points">Channel Points</span></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">Redeem channel points to receive VIP status for a set number of days. VIP is automatically granted when you redeem and automatically removed when time is up. Subscribers get an extended duration.</div>
-        </div>
-      </div>
-    </div>
-    <div class="note"><strong>This is a Channel Point Redemption,</strong> not a chat command. Find it in the channel points menu below the stream.</div>
-  </section>
-
-  <section class="category" id="music">
-    <div class="cat-head">
-      <h2 class="cat-title">Music</h2>
-      <span class="cat-sub">Spotify integration</span>
-    </div>
-    <div class="cmd-list">
-      <div class="cmd-row">
-        <div class="cmd-syntax"><code class="cmd">!music</code></div>
-        <div class="cmd-body">
-          <div class="cmd-desc">See what's currently playing on Spotify: artist, track, and album. In case it slaps and you need to know.</div>
-        </div>
-      </div>
-    </div>
-    <div class="note">Music commands are active when Spotify is connected during stream.</div>
-  </section>
-
-</main>
+  <p class="note">Commands that use the bot name follow the name you set in <code>config.py</code>. Reward amounts, timers and the currency name are settings too, so your numbers may differ from the defaults shown here.</p>
+  </main>
 </div>
 <footer>
   <div class="wrap">
