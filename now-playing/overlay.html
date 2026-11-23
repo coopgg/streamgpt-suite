@@ -436,7 +436,7 @@
 
   // Covers from Streamer.bot arrive in parts after the song; they are put back together here and
   // attached to the song whose artId matches. The last few are kept so a resend needs no new parts.
-  const covers = new Map(), coverParts = new Map();
+  const covers = new Map(), coverParts = new Map(), askedFor = new Set();
   function takeCoverPart(m) {
     if (!m.artId || typeof m.data !== 'string' || !(m.parts > 0) || !(m.part >= 0) || m.part >= m.parts) return;
     let p = coverParts.get(m.artId);
@@ -745,6 +745,17 @@
         // The cover comes separately, in parts (it is too big for one Streamer.bot message).
         if (!data.art && data.artId) data.art = covers.get(data.artId) || null;
         render(data);
+        // A song whose cover never came (this overlay loaded mid-song, or a part went missing):
+        // ask once more after a moment.
+        if (data.artId && !covers.has(data.artId) && !askedFor.has(data.artId)) {
+          const id = data.artId;
+          askedFor.add(id);
+          setTimeout(() => {
+            if (!covers.has(id) && state && state.artId === id) {
+              send({ request: 'DoAction', id: 'np-cover', action: { name: opt.action }, args: { npMode: 'resend' } });
+            }
+          }, 1500);
+        }
       } else if (data && data.type === 'nowplaying-art') {
         takeCoverPart(data);
       } else if (data && data.type === 'nowplaying-look' && opt.sync && typeof data.params === 'string') {

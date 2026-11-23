@@ -57,18 +57,20 @@ public class CPHInline
     private const string TriggerEvent = "nowPlayingSongChanged";
     private const string PidGlobal = "np_watcherPid";
     private const string LookGlobal = "np_look";
-    private string lookParams;
 
-    private readonly object gate = new object();
-    private Process watcher;
-    private bool stopping;
-    private bool coverLogged;
-    private string latestArt;
-    private string latestArtId;
-    private int crashCount;
-    private string latestJson;
-    private JObject latest;
-    private string lastTrackKey;
+    // Static, so every run of the action sees the same watcher, song, cover and look, even if
+    // Streamer.bot runs a request (an overlay asking for the current song) on a fresh instance.
+    private static string lookParams;
+    private static readonly object gate = new object();
+    private static Process watcher;
+    private static bool stopping;
+    private static bool coverLogged;
+    private static string latestArt;
+    private static string latestArtId;
+    private static int crashCount;
+    private static string latestJson;
+    private static JObject latest;
+    private static string lastTrackKey;
 
     public void Init()
     {
@@ -98,7 +100,10 @@ public class CPHInline
             case "resend":
                 BroadcastLook();
                 Broadcast();
-                BroadcastArt();
+                int sentParts = BroadcastArt();
+                SafeLog(latestJson == null
+                    ? "An overlay asked for the current song: nothing yet (is Spotify playing?)"
+                    : "An overlay asked for the current song: sent it" + (sentParts > 0 ? " with its cover (" + sentParts + " parts)" : ", no cover yet"));
                 return true;
             case "look":
                 object lookRaw;
@@ -323,11 +328,11 @@ public class CPHInline
 
     // Sends the current cover in parts of about 8 KB; the overlay puts them back together by artId.
     private const int ArtPartSize = 8000;
-    private void BroadcastArt()
+    private int BroadcastArt()
     {
         string art, id;
         lock (gate) { art = latestArt; id = latestArtId; }
-        if (string.IsNullOrEmpty(art)) return;
+        if (string.IsNullOrEmpty(art)) return 0;
         int parts = (art.Length + ArtPartSize - 1) / ArtPartSize;
         try
         {
@@ -343,8 +348,9 @@ public class CPHInline
                 };
                 CPH.WebsocketBroadcastJson(msg.ToString(Newtonsoft.Json.Formatting.None));
             }
+            return parts;
         }
-        catch (Exception ex) { SafeLog("Sending the cover failed: " + ex.Message); }
+        catch (Exception ex) { SafeLog("Sending the cover failed: " + ex.Message); return 0; }
     }
 
     private void SendSongToChat()
