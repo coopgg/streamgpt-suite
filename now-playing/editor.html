@@ -191,6 +191,13 @@
           <span class="hint" style="margin:0">Text switches between light and dark to stay readable.</span>
         </div>
       </div>
+      <div class="row" id="cornersRow">
+        <span class="label">Corners</span>
+        <div class="seg" data-name="corners">
+          <button type="button" data-value="round">Rounded</button>
+          <button type="button" data-value="square">Square</button>
+        </div>
+      </div>
       <div class="row">
         <span class="label">Side of the screen</span>
         <div class="seg" data-name="align">
@@ -204,9 +211,9 @@
       </div>
       <div class="row">
         <span class="label">Show</span>
-        <label class="check"><input type="checkbox" id="source" checked> App name</label>
-        <label class="check"><input type="checkbox" id="time" checked> Time</label>
-        <label class="check"><input type="checkbox" id="progress" checked> Progress bar</label>
+        <label class="check" id="sourceRow"><input type="checkbox" id="source" checked> App name</label>
+        <label class="check" id="timeRow"><input type="checkbox" id="time" checked> Time</label>
+        <label class="check"><input type="checkbox" id="progress" checked> <span id="progressLabel">Progress bar</span></label>
       </div>
     </section>
 
@@ -269,12 +276,12 @@
     bare: 'No block, just the cover and text over your game.',
     poster: 'A big cover with the text underneath.',
     glow: 'The cover glows in its own colours.',
-    vinyl: 'A turning record with the cover as its centre label. Stops when you pause.'
+    vinyl: 'Just the record, with the cover as its centre label. It stops when you pause.'
   };
 
   // ---------- state ----------
   const defaults = {
-    mode: 'sample', via: 'sb', theme: 'field', rpm: '33.33', colorMode: 'auto', color: '#15171c', align: 'left',
+    mode: 'sample', via: 'sb', theme: 'field', rpm: '33.33', colorMode: 'auto', color: '#15171c', align: 'left', corners: 'round',
     scale: 1, source: true, time: true, progress: true, hide: 5, popup: 0, scene: 'dark',
     host: '127.0.0.1', port: '8080', password: '', bridge: '127.0.0.1:5000', sample: 0
   };
@@ -294,6 +301,7 @@
     if (st.theme !== 'field') p.set('theme', st.theme);
     if (st.colorMode === 'fixed') p.set('color', st.color.replace('#', ''));
     if (st.align === 'right') p.set('align', 'right');
+    if (st.corners === 'square') p.set('corners', 'square');
     if (Number(st.scale) !== 1) p.set('scale', String(st.scale));
     if (Number(st.hide) !== 5) p.set('hide', String(st.hide));
     if (Number(st.popup) > 0) p.set('popup', String(st.popup));
@@ -363,6 +371,9 @@
     $('sbBox').hidden = st.via !== 'sb';
     $('bridgeBox').hidden = st.via !== 'bridge';
     $('rpmRow').hidden = st.theme !== 'vinyl';
+    // Vinyl is just the record: no text to show, and the progress is a ring around it.
+    $('sourceRow').hidden = $('timeRow').hidden = $('cornersRow').hidden = st.theme === 'vinyl';
+    $('progressLabel').textContent = st.theme === 'vinyl' ? 'Progress ring around the record' : 'Progress bar';
     $('colorRow').hidden = st.colorMode !== 'fixed';
     $('themeHint').textContent = HINTS[st.theme];
     $('preview').className = 'preview ' + st.scene;

@@ -39,9 +39,10 @@ Add these to the end of the URL, for example `overlay.html?theme=strip&align=rig
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `theme` | `field` | `field` (the cover beside a block of its color), `strip` (one slim line), `bare` (no block, just the cover and text over your scene), `poster` (a big cover with the text underneath), `vinyl` (a turning record with the cover as its center label; it stops when you pause, and starts without the time and progress bar) or `glow` (the cover glows in its own colors, from a blurred copy of the cover itself; the one theme that breaks the no-glow design rules, so it's opt-in) |
+| `theme` | `field` | `field` (the cover beside a block of its color), `strip` (one slim line), `bare` (no block, just the cover and text over your scene), `poster` (a big cover with the text underneath), `vinyl` (just the record, no box or text: the cover is its center label, it turns while music plays and stops when you pause; `progress=1` adds a progress ring around it) or `glow` (the cover glows in its own colors, from a blurred copy of the cover itself; the one theme that breaks the no-glow design rules, so it's opt-in) |
 | `color` | `auto` | `auto` gives the overlay each song's main cover color, with light or dark text, whichever reads better. Or set a fixed hex color like `15171c`. |
 | `align` | `left` | `left` or `right` |
+| `corners` | `round` | `round` or `square` (cards, covers and the strip pill) |
 | `scale` | `1` | Size multiplier, e.g. `1.5` |
 | `hide` | `5` | Seconds after you pause before the card hides. `0` keeps it up. |
 | `popup` | `0` | Show for this many seconds on each new song, then hide. `0` shows it the whole time music plays. |

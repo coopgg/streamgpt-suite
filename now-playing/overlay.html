@@ -13,6 +13,7 @@
 
   URL options (all optional), e.g. overlay.html?theme=strip&align=right
     theme=field       field, strip, bare, poster, glow or vinyl
+    corners=round     round or square
     color=auto        auto = the field takes the album art's colour, or a fixed hex like 15171c
     align=left        left or right
     scale=1           size multiplier, e.g. 1.5
@@ -20,7 +21,7 @@
     popup=0           seconds to show after each new song then hide, 0 = always show while playing
     source=1          show the app name (Spotify, Chrome...), 0 to hide
     time=1            show elapsed and total time, 0 to hide (vinyl: off unless set)
-    progress=1        show the progress bar, 0 to hide (vinyl: off unless set)
+    progress=1        show the progress bar, 0 to hide (vinyl: a ring around the record, off unless set)
     rpm=33            vinyl only: how fast the record turns (33, 45, or slower like 10)
     host=127.0.0.1    Streamer.bot WebSocket server address
     port=8080         Streamer.bot WebSocket server port
@@ -132,27 +133,60 @@
   .t-glow .field > :not(.bar) { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.55); } /* taste-skill-ignore */
   .t-glow .bar { position: static; margin-top: 10px; }
 
-  /* ---------- vinyl: the cover is the record's centre label, and the record turns ---------- */
-  .t-vinyl .np { width: 470px; --disc: 124px; }
+  /* ---------- rounded corners (corners=square turns them off) ---------- */
+  .stage { --r: 16px; --r-art: 10px; }
+  .stage.square { --r: 0px; --r-art: 0px; }
+  .t-field .np, .t-poster .np { border-radius: var(--r); overflow: hidden; }
+  .t-field .cover-wrap { padding: 10px 0 10px 10px; }
+  .t-field .cover { width: 96px; border-radius: var(--r-art); }
+  .t-poster .cover-wrap { padding: 12px 12px 0; }
+  .t-poster .cover { border-radius: var(--r-art); }
+  .t-bare .cover, .t-glow .cover, .t-glow .cover::before, .t-glow .cover::after { border-radius: var(--r-art); }
+  .t-bare .bar, .t-bare .fill, .t-glow .bar, .t-glow .fill, .t-strip .bar, .t-strip .fill { border-radius: 99px; }
+  /* On a rounded card the bar sits inside, under the text, rather than along the clipped bottom edge. */
+  .t-field .bar, .t-poster .bar { position: static; margin-top: 10px; }
+  .t-field .bar, .t-field .fill, .t-poster .bar, .t-poster .fill { border-radius: 99px; }
+  .t-field .field { padding-bottom: 14px; }
+  .t-poster .field { padding-bottom: 18px; }
+  .t-strip .np { border-radius: 999px; overflow: hidden; }
+  .t-strip .cover-wrap { padding: 5px; }
+  .t-strip .cover { width: 40px; border-radius: 50%; }
+  .t-strip .bar { left: 60px; right: 24px; bottom: 5px; }
+  .t-strip .np.no-art .bar { left: 24px; }
+  .stage.square.t-strip .np, .stage.square.t-strip .cover { border-radius: 0; }
+
+  /* ---------- vinyl: just the record, with the cover as its centre label ---------- */
+  .t-vinyl .np { background: transparent; width: auto; padding: 8px; --disc: 220px; }
+  .t-vinyl .field { display: none; }
   .t-vinyl .np.no-art .cover-wrap { display: flex; }
-  .t-vinyl .cover-wrap { padding: 12px 0 12px 12px; }
+  .t-vinyl .cover-wrap {
+    padding: 12px;
+    /* The record floats over the game, so it gets a soft dark halo underneath to lift it off busy scenes. */
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45)); /* taste-skill-ignore */
+  }
   .t-vinyl .cover {
     position: relative; width: var(--disc); border-radius: 50%;
-    /* The record itself, drawn in code: a shiny rim (so it shows on a black field) over the grooves. */
-    background: radial-gradient(circle closest-side, transparent 95%, #45454c 96.5%, #1c1c20 100%), repeating-radial-gradient(circle, #1d1d20 0 1px, #0b0b0c 1px 3px) !important; /* taste-skill-ignore */
+    /* The record itself, drawn in code: a shiny rim over the grooves, and a spindle hole you can see through. */
+    background: radial-gradient(circle closest-side, transparent 95.5%, #4a4a52 97%, #1c1c20 100%), repeating-radial-gradient(circle, #1d1d20 0 1px, #0b0b0c 1px 3px) !important; /* taste-skill-ignore */
+    -webkit-mask: radial-gradient(circle closest-side, transparent 0 3.6%, #000 4.2%); /* taste-skill-ignore */
+    mask: radial-gradient(circle closest-side, transparent 0 3.6%, #000 4.2%); /* taste-skill-ignore */
     animation: spin var(--spin, 1.8s) linear infinite;
   }
   .t-vinyl .cover::before {
-    content: ""; position: absolute; inset: 24%; border-radius: 50%;
+    content: ""; position: absolute; inset: 30%; border-radius: 50%;
     background: var(--accent) var(--art, none) center / cover no-repeat;
   }
-  .t-vinyl .cover::after { content: ""; position: absolute; inset: 47.6%; border-radius: 50%; background: var(--ground); }
   /* Light catching the grooves: it stays still while the record turns under it. */
   .t-vinyl .cover-wrap::after {
     content: ""; position: absolute; top: 12px; left: 12px; width: var(--disc); aspect-ratio: 1; border-radius: 50%; pointer-events: none;
-    background: conic-gradient(from 20deg, transparent 0 8%, rgba(255, 255, 255, 0.13) 13%, transparent 19% 58%, rgba(255, 255, 255, 0.09) 63%, transparent 69%); /* taste-skill-ignore */
+    background: conic-gradient(from 20deg, transparent 0 8%, rgba(255, 255, 255, 0.14) 13%, transparent 19% 58%, rgba(255, 255, 255, 0.1) 63%, transparent 69%); /* taste-skill-ignore */
+    -webkit-mask: radial-gradient(circle closest-side, transparent 0 31%, #000 31.5%); /* taste-skill-ignore */
+    mask: radial-gradient(circle closest-side, transparent 0 31%, #000 31.5%); /* taste-skill-ignore */
   }
-  .t-vinyl .info { justify-content: flex-start; }
+  /* Progress: a ring around the record that fills clockwise from the top. */
+  .ring { display: none; position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; overflow: visible; pointer-events: none; }
+  .ring circle { fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linecap: round; transition: stroke 0.6s ease; }
+  .t-vinyl .np:not(.no-progress) .ring { display: block; }
   @keyframes spin { to { rotate: 360deg; } }
 
   /* ---------- new song: the text rises in, the cover fades up ---------- */
@@ -176,7 +210,7 @@
 <body>
 <div class="stage" id="stage">
   <div class="np no-art" id="np" role="status" aria-live="polite">
-    <div class="cover-wrap"><div class="cover" id="cover"></div></div>
+    <div class="cover-wrap"><div class="cover" id="cover"></div><svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle id="ring" cx="50" cy="50" r="49" pathLength="100" stroke-dasharray="0 100"/></svg></div>
     <div class="field">
       <p class="line title" id="title"><span></span></p>
       <p class="line artist" id="artist"><span></span></p>
@@ -206,7 +240,8 @@
       source: p.get('source') !== '0',
       time: p.has('time') ? p.get('time') !== '0' : !vinyl,
       progress: p.has('progress') ? p.get('progress') !== '0' : !vinyl,
-      rpm: Math.min(78, Math.max(2, parseFloat(p.get('rpm')) || 33.33))
+      rpm: Math.min(78, Math.max(2, parseFloat(p.get('rpm')) || 33.33)),
+      corners: p.get('corners') === 'square' ? 'square' : 'round'
     };
   }
   const opt = {
@@ -261,12 +296,13 @@
 
   function applyPalette(p) {
     root.style.setProperty('--ground', css(p.ground));
-    if (opt.theme !== 'bare' && opt.theme !== 'glow') {
+    const onScene = opt.theme === 'bare' || opt.theme === 'glow' || opt.theme === 'vinyl';
+    if (!onScene) {
       root.style.setProperty('--ink', css(p.ink));
       root.style.setProperty('--ink-2', css(p.ink, 0.8));
       root.style.setProperty('--track', css(p.ink, 0.2));
     }
-    root.style.setProperty('--accent', css((opt.theme === 'bare' || opt.theme === 'glow') && p.vivid ? p.vivid : p.accent));
+    root.style.setProperty('--accent', css(onScene && p.vivid ? p.vivid : p.accent));
   }
 
   const coverCache = new Map();
@@ -433,13 +469,15 @@
     const dur = state.duration || 0;
     if (dur > 0) pos = Math.min(pos, dur);
     $('time').textContent = !state.playing ? 'Paused' : dur > 0 ? `${fmt(pos)} / ${fmt(dur)}` : fmt(pos);
-    $('fill').style.width = dur > 0 ? `${(pos / dur) * 100}%` : '0%';
+    const pct = dur > 0 ? (pos / dur) * 100 : 0;
+    $('fill').style.width = pct + '%';
+    $('ring').setAttribute('stroke-dasharray', `${pct.toFixed(2)} 100`);
   }
   setInterval(tick, 250);
 
   function configure(look) {
     Object.assign(opt, look);
-    stage.className = 'stage t-' + opt.theme + (opt.align === 'right' ? ' right' : '');
+    stage.className = 'stage t-' + opt.theme + (opt.align === 'right' ? ' right' : '') + (opt.corners === 'square' ? ' square' : '');
     root.style.setProperty('--scale', opt.scale);
     root.style.setProperty('--spin', (60 / opt.rpm).toFixed(3) + 's');
     np.classList.toggle('no-source', !opt.source);
