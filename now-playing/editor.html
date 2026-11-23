@@ -507,7 +507,8 @@
   function pushLook(now) {
     if (!st.sync || st.via !== 'sb') return;
     clearTimeout(pushTimer);
-    pushTimer = setTimeout(() => doAction({ npMode: 'look', npLook: lookParams().toString() }), now ? 0 : 150);
+    // Sent a moment after you stop changing things, not on every step of a slider.
+    pushTimer = setTimeout(() => doAction({ npMode: 'look', npLook: lookParams().toString() }), now ? 0 : 400);
   }
 
   // ---------- preview ----------

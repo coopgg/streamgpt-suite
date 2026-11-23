@@ -83,9 +83,12 @@ public class CPHInline
         StartWatcher();
     }
 
+    // Only the copy of this code that started the watcher stops it when Streamer.bot disposes it
+    // (on recompile or exit), so a short-lived copy used for one request never stops it.
+    private static CPHInline owner;
     public void Dispose()
     {
-        StopWatcher();
+        if (owner == this || owner == null) StopWatcher();
     }
 
     public bool Execute()
@@ -109,8 +112,12 @@ public class CPHInline
                 object lookRaw;
                 string look = args.TryGetValue("npLook", out lookRaw) && lookRaw != null ? lookRaw.ToString() : "";
                 if (look.Length > 4000) return false;
-                lookParams = look;
-                CPH.SetGlobalVar(LookGlobal, look, true);
+                // Saved to disk only when it actually changed (the editor sends while you drag sliders).
+                if (look != lookParams)
+                {
+                    lookParams = look;
+                    CPH.SetGlobalVar(LookGlobal, look, true);
+                }
                 BroadcastLook();
                 return true;
             case "replay":
@@ -161,10 +168,22 @@ public class CPHInline
                 StandardErrorEncoding = new UTF8Encoding(false)
             };
 
+            // These run on background threads, outside any action run. An exception escaping one
+            // would take down all of Streamer.bot, so each catches everything and logs it instead.
             var p = new Process { StartInfo = psi, EnableRaisingEvents = true };
-            p.OutputDataReceived += (s, e) => { if (e.Data != null) HandleLine(e.Data); };
-            p.ErrorDataReceived += (s, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) SafeLog(e.Data); };
-            p.Exited += (s, e) => OnExited(p);
+            p.OutputDataReceived += (s, e) =>
+            {
+                try { if (e.Data != null) HandleLine(e.Data); }
+                catch (Exception ex) { SafeLog("Skipped a line from the watcher: " + ex.Message); }
+            };
+            p.ErrorDataReceived += (s, e) =>
+            {
+                try { if (!string.IsNullOrWhiteSpace(e.Data)) SafeLog(e.Data); } catch { }
+            };
+            p.Exited += (s, e) =>
+            {
+                try { OnExited(p); } catch (Exception ex) { SafeLog("Watcher restart failed: " + ex.Message); }
+            };
 
             try
             {
@@ -172,6 +191,7 @@ public class CPHInline
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
                 watcher = p;
+                owner = this;
                 CPH.SetGlobalVar(PidGlobal, p.Id, false);
                 SafeLog("Watcher started (pid " + p.Id + ")");
             }
@@ -221,7 +241,11 @@ public class CPHInline
             return;
         }
         SafeLog("Watcher exited, restarting in 5 seconds");
-        Task.Delay(5000).ContinueWith(_ => { if (!stopping) StartWatcher(); });
+        Task.Delay(5000).ContinueWith(_ =>
+        {
+            try { if (!stopping) StartWatcher(); }
+            catch (Exception ex) { SafeLog("Watcher restart failed: " + ex.Message); }
+        });
     }
 
     private void HandleLine(string data)
@@ -308,7 +332,15 @@ public class CPHInline
         string json;
         lock (gate) { json = latestJson; }
         if (json == null) return;
-        try { CPH.WebsocketBroadcastJson(json); }
+        SendRaw(json);
+    }
+
+    // Every message to the overlays goes through here, one at a time: the watcher's thread and
+    // action runs (overlays asking, the editor saving the look) can otherwise send at the same moment.
+    private static readonly object sendLock = new object();
+    private void SendRaw(string json)
+    {
+        try { lock (sendLock) { CPH.WebsocketBroadcastJson(json); } }
         catch (Exception ex) { SafeLog("Broadcast failed: " + ex.Message); }
     }
 
@@ -322,8 +354,7 @@ public class CPHInline
 
     private void SendToOverlays(JObject msg)
     {
-        try { CPH.WebsocketBroadcastJson(msg.ToString(Newtonsoft.Json.Formatting.None)); }
-        catch (Exception ex) { SafeLog("Broadcast failed: " + ex.Message); }
+        SendRaw(msg.ToString(Newtonsoft.Json.Formatting.None));
     }
 
     // Sends the current cover in parts of about 8 KB; the overlay puts them back together by artId.
@@ -346,7 +377,7 @@ public class CPHInline
                     ["parts"] = parts,
                     ["data"] = art.Substring(i * ArtPartSize, Math.Min(ArtPartSize, art.Length - i * ArtPartSize))
                 };
-                CPH.WebsocketBroadcastJson(msg.ToString(Newtonsoft.Json.Formatting.None));
+                SendRaw(msg.ToString(Newtonsoft.Json.Formatting.None));
             }
             return parts;
         }
