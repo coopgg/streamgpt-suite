@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamGPT Now Playing</title>
+<!--
+  StreamGPT Now Playing overlay. Add as an OBS Browser Source (width 800, height 200).
+
+  URL options (all optional), e.g. overlay.html?align=right&accent=7ddc9a
+    host=127.0.0.1    Streamer.bot WebSocket server address
+    port=8080         Streamer.bot WebSocket server port
+    endpoint=/        Streamer.bot WebSocket endpoint
+    password=         only if you turned on WebSocket authentication
+    align=left        left or right
+    accent=ff5a5a     hex color for the progress bar and label
+    scale=1           size multiplier, e.g. 1.5
+    hide=5            seconds after pausing before the card hides, 0 = never hide
+    popup=0           seconds to show after each new song then hide, 0 = always show while playing
+    source=1          show the app name (Spotify, Chrome...), 0 to hide
+    time=1            show elapsed and total time, 0 to hide
+    progress=1        show the progress bar, 0 to hide
+    demo=0            1 = fake songs, for positioning the overlay without Streamer.bot
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #ff5a5a;
+    --scale: 1;
+    --card-bg: rgba(14, 14, 18, 0.82);
+    --card-line: rgba(255, 255, 255, 0.1);
+    --text: #f4f4f6;
+    --text-dim: rgba(244, 244, 246, 0.68);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; overflow: hidden; }
+  body { font-family: Inter, "Segoe UI", system-ui, sans-serif; color: var(--text); padding: 16px; }
+  .stage { display: flex; }
+  .stage.right { justify-content: flex-end; }
+
+  .card {
+    position: relative; display: flex; align-items: center; gap: 14px;
+    width: 420px; padding: 12px 16px 12px 12px; border-radius: 14px; overflow: hidden;
+    background: var(--card-bg); border: 1px solid var(--card-line);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    transform-origin: left center; zoom: var(--scale);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .stage.right .card { transform-origin: right center; }
+  .card.show { opacity: 1; transform: none; }
+
+  .backdrop {
+    position: absolute; inset: -30px; background-size: cover; background-position: center;
+    filter: blur(28px) saturate(1.4); opacity: 0.35; transition: background-image 0.6s;
+    z-index: 0;
+  }
+  .art, .meta { position: relative; z-index: 1; }
+
+  .art {
+    width: 76px; height: 76px; flex-shrink: 0; border-radius: 9px;
+    background: #24242c center / cover no-repeat;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    display: grid; place-items: center;
+  }
+  .art svg { width: 34px; height: 34px; opacity: 0.5; }
+  .art.has-img svg { display: none; }
+
+  .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .label {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .label .src { color: var(--text-dim); font-weight: 600; letter-spacing: 0.06em; }
+  .eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 10px; }
+  .eq i { width: 2px; background: var(--accent); border-radius: 1px; animation: eq 0.9s ease-in-out infinite; }
+  .eq i:nth-child(2) { animation-delay: -0.3s; }
+  .eq i:nth-child(3) { animation-delay: -0.6s; }
+  .paused .eq i { animation-play-state: paused; height: 3px !important; }
+  @keyframes eq { 0%, 100% { height: 3px; } 50% { height: 10px; } }
+
+  .line { overflow: hidden; white-space: nowrap; }
+  .line span { display: inline-block; }
+  .line.scroll span { animation: marquee var(--dur, 10s) ease-in-out infinite; }
+  @keyframes marquee { 0%, 18% { transform: translateX(0); } 82%, 100% { transform: translateX(var(--shift)); } }
+  .title { font-size: 17px; font-weight: 700; line-height: 1.3; }
+  .artist { font-size: 14px; font-weight: 500; color: var(--text-dim); line-height: 1.3; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .bar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+  .fill { height: 100%; width: 0; background: var(--accent); border-radius: 2px; }
+  .time { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--text-dim); white-space: nowrap; }
+  .no-progress .bar-row { display: none; }
+  .no-time .time { display: none; }
+  .no-source .src { display: none; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="card" id="card">
+    <div class="backdrop" id="backdrop"></div>
+    <div class="art" id="art">
+      <svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+    </div>
+    <div class="meta">
+      <div class="label"><span class="eq"><i></i><i></i><i></i></span>Now playing<span class="src" id="src"></span></div>
+      <div class="line title" id="title"><span></span></div>
+      <div class="line artist" id="artist"><span></span></div>
+      <div class="bar-row"><span class="time" id="pos">0:00</span><div class="bar"><div class="fill" id="fill"></div></div><span class="time" id="dur">0:00</span></div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search);
+  const opt = {
+    host: q.get('host') || '127.0.0.1',
+    port: q.get('port') || '8080',
+    endpoint: q.get('endpoint') || '/',
+    password: q.get('password') || '',
+    align: q.get('align') === 'right' ? 'right' : 'left',
+    accent: (q.get('accent') || '').replace(/[^0-9a-f]/gi, ''),
+    scale: parseFloat(q.get('scale')) || 1,
+    hide: q.has('hide') ? Math.max(0, parseFloat(q.get('hide')) || 0) : 5,
+    popup: Math.max(0, parseFloat(q.get('popup')) || 0),
+    source: q.get('source') !== '0',
+    time: q.get('time') !== '0',
+    progress: q.get('progress') !== '0',
+    demo: q.get('demo') === '1',
+    action: q.get('action') || 'Now Playing'
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const root = document.documentElement;
+  const card = $('card');
+  if (opt.accent.length === 3 || opt.accent.length === 6) root.style.setProperty('--accent', '#' + opt.accent);
+  root.style.setProperty('--scale', opt.scale);
+  if (opt.align === 'right') $('stage').classList.add('right');
+  if (!opt.source) card.classList.add('no-source');
+  if (!opt.time) card.classList.add('no-time');
+  if (!opt.progress) card.classList.add('no-progress');
+
+  // ---------- rendering ----------
+  let state = null, basePos = 0, baseAt = 0, trackKey = '', hideTimer = null;
+
+  const fmt = (s) => {
+    s = Math.max(0, Math.floor(s || 0));
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = String(s % 60).padStart(2, '0');
+    return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+  };
+
+  function setLine(el, text) {
+    const span = el.firstElementChild;
+    if (span.textContent === text) return;
+    span.textContent = text;
+    el.classList.remove('scroll');
+    requestAnimationFrame(() => {
+      const over = span.scrollWidth - el.clientWidth;
+      if (over > 2) {
+        el.style.setProperty('--shift', `-${over + 8}px`);
+        el.style.setProperty('--dur', `${Math.max(8, over / 18 + 6)}s`);
+        el.classList.add('scroll');
+      }
+    });
+  }
+
+  function show(on) { card.classList.toggle('show', on); }
+
+  function scheduleHide(seconds) {
+    clearTimeout(hideTimer);
+    hideTimer = seconds > 0 ? setTimeout(() => show(false), seconds * 1000) : null;
+  }
+
+  function render(d) {
+    if (!d || d.type !== 'nowplaying') return;
+    state = d;
+    basePos = d.position || 0;
+    baseAt = performance.now();
+
+    const hasSong = !!d.title;
+    const key = `${d.title}|${d.artist}|${d.appId}`;
+    const newTrack = key !== trackKey;
+    trackKey = key;
+
+    if (hasSong) {
+      setLine($('title'), d.title);
+      setLine($('artist'), d.artist || d.album || '');
+      $('src').textContent = d.source ? `· ${d.source}` : '';
+      const art = $('art');
+      if (d.art) {
+        const url = `url("${d.art}")`;
+        art.style.backgroundImage = url;
+        $('backdrop').style.backgroundImage = url;
+        art.classList.add('has-img');
+      } else if (newTrack) {
+        art.style.backgroundImage = '';
+        $('backdrop').style.backgroundImage = '';
+        art.classList.remove('has-img');
+      }
+    }
+    card.classList.toggle('paused', !d.playing);
+    tick();
+
+    if (!hasSong || d.status === 'None' || d.status === 'Closed') { scheduleHide(0); show(false); return; }
+
+    if (d.playing) {
+      if (opt.popup > 0) {
+        if (newTrack || !card.classList.contains('show') && d.wasPaused) { show(true); scheduleHide(opt.popup); }
+      } else { show(true); scheduleHide(0); }
+    } else if (opt.hide > 0) {
+      if (card.classList.contains('show')) scheduleHide(opt.hide);
+    } else if (opt.popup === 0) {
+      show(true); scheduleHide(0);
+    }
+  }
+
+  function tick() {
+    if (!state) return;
+    let pos = basePos;
+    if (state.playing) pos += (performance.now() - baseAt) / 1000;
+    const dur = state.duration || 0;
+    if (dur > 0) pos = Math.min(pos, dur);
+    $('pos').textContent = fmt(pos);
+    $('dur').textContent = dur > 0 ? fmt(dur) : '--:--';
+    $('fill').style.width = dur > 0 ? `${(pos / dur) * 100}%` : '0%';
+  }
+  setInterval(tick, 250);
+
+  // ---------- demo mode ----------
+  if (opt.demo) {
+    const art = (a, b) => 'data:image/svg+xml;base64,' + btoa(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/><circle cx="50" cy="50" r="22" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="3"/><circle cx="50" cy="50" r="4" fill="#fff" fill-opacity=".7"/></svg>`);
+    const songs = [
+      { title: 'Midnight Static', artist: 'Neon Harbor', album: 'Low Light', source: 'Spotify', duration: 214, art: art('#ff5a5a', '#5a2bff') },
+      { title: 'A Much Longer Song Title That Needs To Scroll Across The Card', artist: 'The Overflow Collective featuring Somebody Else', album: '', source: 'Chrome', duration: 3725, art: art('#14b8a6', '#1e3a8a') },
+      { title: 'Paper Planes at Dawn', artist: 'Kite Season', album: 'Updraft', source: 'Apple Music', duration: 187, art: null }
+    ];
+    let i = 0;
+    const next = () => {
+      const s = songs[i++ % songs.length];
+      render({ type: 'nowplaying', playing: true, status: 'Playing', appId: s.source, position: 20, ...s });
+    };
+    next();
+    setInterval(next, 9000);
+    return;
+  }
+
+  // ---------- Streamer.bot WebSocket ----------
+  let ws = null, ready = false, retry = 1000;
+  const send = (obj) => { try { ws.send(JSON.stringify(obj)); } catch (e) {} };
+
+  async function sha256b64(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  }
+
+  function begin() {
+    if (ready) return;
+    ready = true;
+    send({ request: 'Subscribe', id: 'np-sub', events: { General: ['Custom'] } });
+    send({ request: 'DoAction', id: 'np-resend', action: { name: opt.action }, args: { npMode: 'resend' } });
+  }
+
+  function connect() {
+    ready = false;
+    try { ws = new WebSocket(`ws://${opt.host}:${opt.port}${opt.endpoint}`); }
+    catch (e) { setTimeout(connect, retry); return; }
+
+    let helloTimer = null;
+    ws.onopen = () => {
+      retry = 1000;
+      helloTimer = setTimeout(begin, 1500); // older Streamer.bot versions do not send Hello
+    };
+    ws.onmessage = async (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+
+      if (msg.request === 'Hello') {
+        clearTimeout(helloTimer);
+        const auth = msg.authentication;
+        if (auth && auth.challenge) {
+          if (!opt.password) { console.warn('Streamer.bot wants a password: add &password=... to the URL'); return; }
+          try {
+            const secret = await sha256b64(opt.password + auth.salt);
+            const answer = await sha256b64(secret + auth.challenge);
+            send({ request: 'Authenticate', id: 'np-auth', authentication: answer });
+          } catch (e) { console.warn('Could not authenticate', e); }
+        } else begin();
+        return;
+      }
+      if (msg.id === 'np-auth') {
+        if (msg.status === 'ok') begin(); else console.warn('Streamer.bot rejected the password');
+        return;
+      }
+
+      let data = null;
+      if (msg.event && msg.event.source === 'General' && msg.event.type === 'Custom') data = msg.data;
+      else if (msg.type === 'nowplaying') data = msg;
+      if (data && typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { data = null; } }
+      if (data && data.type === 'nowplaying') {
+        data.wasPaused = state ? !state.playing : true;
+        render(data);
+      }
+    };
+    ws.onclose = () => {
+      clearTimeout(helloTimer);
+      setTimeout(connect, retry);
+      retry = Math.min(retry * 2, 10000);
+    };
+    ws.onerror = () => { try { ws.close(); } catch (e) {} };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>
