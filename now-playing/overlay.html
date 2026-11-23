@@ -347,6 +347,24 @@
     return { ground: g, ink, accent: a };
   }
 
+  // When the field would match the colour at the cover's edge (a yellow cover on a yellow field),
+  // step the field lighter or darker, same hue, until the cover stands clear of it. Whichever
+  // direction needs the smaller change wins; palette() then re-checks the text contrast.
+  const EDGE_STEP = 1.45;
+  function separate(p, edge, vivid) {
+    if (!edge || contrast(p.ground, edge) >= EDGE_STEP) return p;
+    let best = null;
+    for (const toward of [[0, 0, 0], [255, 255, 255]]) {
+      let g = p.ground;
+      for (let i = 0; i < 16 && contrast(g, edge) < EDGE_STEP; i++) g = mix(g, toward, 0.06);
+      const cand = palette(g, vivid);
+      if (contrast(cand.ground, edge) < EDGE_STEP) continue;
+      const d = dist(cand.ground, p.ground);
+      if (!best || d < best.d) best = { d, p: cand };
+    }
+    return best ? best.p : p;
+  }
+
   function applyPalette(p) {
     root.style.setProperty('--ground', css(p.ground));
     const onScene = opt.theme === 'bare' || opt.theme === 'glow' || opt.theme === 'vinyl';
@@ -410,7 +428,16 @@
             const s = sat(b.c), score = b.n * s * s;
             if (s > 0.35 && Math.max(...b.c) > 70 && (!ground || dist(b.c, ground) > 90) && score > best) { best = score; vivid = b.c; }
           }
-          const out = ground ? { ground, vivid } : null;
+          // The colour around the cover's edge: the field must not match it, or the cover's edge disappears.
+          const edgeSum = [0, 0, 0]; let edgeN = 0;
+          for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+            if (x > 2 && y > 2 && x < n - 3 && y < n - 3) continue;
+            const i = (y * n + x) * 4;
+            if (px[i + 3] < 128) continue;
+            edgeSum[0] += px[i]; edgeSum[1] += px[i + 1]; edgeSum[2] += px[i + 2]; edgeN++;
+          }
+          const edge = edgeN ? edgeSum.map((v) => Math.round(v / edgeN)) : null;
+          const out = ground ? { ground, vivid, edge } : null;
           coverCache.set(src, out);
           resolve(out);
         } catch (e) { resolve(null); }
@@ -426,7 +453,7 @@
     readCover(art).then((r) => {
       if (!state || state.art !== art) return;
       if (!r) return applyPalette(palette(DEFAULT_GROUND, DEFAULT_ACCENT));
-      const p = palette(r.ground, r.vivid);
+      const p = separate(palette(r.ground, r.vivid), r.edge, r.vivid);
       p.vivid = r.vivid || [255, 255, 255]; // bare and glow: white when the cover has no strong colour
       applyPalette(p);
     });
