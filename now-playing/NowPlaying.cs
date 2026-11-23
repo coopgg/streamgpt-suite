@@ -53,6 +53,7 @@ public class CPHInline
     private readonly object gate = new object();
     private Process watcher;
     private bool stopping;
+    private bool coverLogged;
     private int crashCount;
     private string latestJson;
     private JObject latest;
@@ -223,10 +224,22 @@ public class CPHInline
 
         Broadcast();
 
+        // Log each new song and whether its cover came through, so a missing cover is easy to spot.
         string key = title + "|" + artist;
+        string art = (string)o["art"];
+        bool hasArt = !string.IsNullOrEmpty(art);
+        if (hasArt && key == lastTrackKey && !coverLogged)
+        {
+            coverLogged = true;
+            SafeLog("Cover arrived for " + title + " (" + (art.Length * 3 / 4 / 1024) + " KB)");
+        }
         if (playing && title != "" && key != lastTrackKey)
         {
             lastTrackKey = key;
+            coverLogged = hasArt;
+            SafeLog("Now playing: " + title + " by " + artist + (hasArt
+                ? " (cover: " + (art.Length * 3 / 4 / 1024) + " KB)"
+                : " (no cover yet)"));
             try
             {
                 CPH.TriggerCodeEvent(TriggerEvent, new Dictionary<string, object>

@@ -27,6 +27,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
 $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
 $null = [Windows.Storage.Streams.IRandomAccessStreamWithContentType, Windows.Storage.Streams, ContentType = WindowsRuntime]
+$null = [Windows.Storage.Streams.DataReader, Windows.Storage.Streams, ContentType = WindowsRuntime]
 
 $MgrType    = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]
 $PropsType  = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties]
@@ -80,19 +81,44 @@ function Get-SourceName([string]$appId) {
   return $name
 }
 
-function Get-ArtDataUri($props) {
-  if ($null -eq $props.Thumbnail) { return $null }
+# Reads the cover into bytes. Windows' own DataReader first (it works from PowerShell 5.1);
+# the .NET stream bridge as a second try. Problems go to stderr, which Streamer.bot logs.
+$script:artError = $null
+function Get-ArtBytes($ras) {
   try {
-    $ras = Await ($props.Thumbnail.OpenReadAsync()) $StreamType
+    $size = [uint32]$ras.Size
+    if ($size -eq 0) { return $null }
+    $reader = [Windows.Storage.Streams.DataReader]::new($ras.GetInputStreamAt(0))
+    $null = Await ($reader.LoadAsync($size)) ([uint32])
+    $bytes = New-Object byte[] $size
+    $reader.ReadBytes($bytes)
+    $reader.Dispose()
+    return ,$bytes
+  } catch { $first = $_.Exception.Message }
+  try {
     $src = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($ras)
     $ms = New-Object System.IO.MemoryStream
     $src.CopyTo($ms)
     $src.Dispose()
-    if ($ms.Length -eq 0 -or $ms.Length -gt 1MB) { return $null }
+    return ,$ms.ToArray()
+  } catch { throw "DataReader: $first / stream: $($_.Exception.Message)" }
+}
+
+function Get-ArtDataUri($props) {
+  if ($null -eq $props.Thumbnail) { return $null }
+  try {
+    $ras = Await ($props.Thumbnail.OpenReadAsync()) $StreamType
+    $bytes = Get-ArtBytes $ras
+    if ($null -eq $bytes -or $bytes.Length -eq 0 -or $bytes.Length -gt 1MB) { return $null }
     $ct = [string]$ras.ContentType
-    if (-not $ct -or -not $ct.StartsWith('image/')) { $ct = 'image/png' }
-    return "data:$ct;base64," + [Convert]::ToBase64String($ms.ToArray())
-  } catch { return $null }
+    if (-not $ct -or -not $ct.StartsWith('image/')) { $ct = 'image/jpeg' }
+    return "data:$ct;base64," + [Convert]::ToBase64String($bytes)
+  } catch {
+    $msg = "could not read the cover: " + $_.Exception.Message
+    if ($msg -ne $script:artError) { [Console]::Error.WriteLine("nowplaying: $msg") }
+    $script:artError = $msg
+    return $null
+  }
 }
 
 $script:lastAppId = $null
@@ -112,6 +138,13 @@ function Select-Session($mgr) {
 }
 
 function Emit($state) {
+  # Run by hand (no Streamer.bot), print the cover's size instead of the long image text so the line stays readable.
+  if ($ParentPid -eq 0) {
+    $shown = [ordered]@{}
+    foreach ($k in $state.Keys) { $shown[$k] = $state[$k] }
+    $shown.art = if ($state.art) { "(cover found: {0} KB)" -f [Math]::Round($state.art.Length * 0.75 / 1KB) } else { '(no cover)' }
+    $state = $shown
+  }
   [Console]::Out.WriteLine(($state | ConvertTo-Json -Compress))
   [Console]::Out.Flush()
 }
@@ -163,9 +196,9 @@ while ($true) {
       $track = "$appId|$title|$artist|$album"
       if ($track -ne $lastTrack) { $lastTrack = $track; $art = $null; $artTries = 0 }
 
-      # Some apps change the title a moment before the cover, so look again for a few seconds.
+      # Spotify can change the title a few seconds before the cover arrives, so keep looking for 10 checks.
       $artChanged = $false
-      if ($artTries -lt 3) {
+      if ($artTries -lt 10) {
         $artTries++
         $newArt = Get-ArtDataUri $props
         if ($newArt -and $newArt -ne $art) { $art = $newArt; $artChanged = $true }
