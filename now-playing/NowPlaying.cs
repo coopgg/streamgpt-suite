@@ -1,6 +1,12 @@
 // StreamGPT Now Playing: Streamer.bot C# action
 //
 // Paste this into an action named exactly "[Spotify] Now Playing" (Execute C# Code sub-action).
+//
+// If compiling says "The type or namespace name 'Process' could not be found", the code needs
+// Windows' System.dll: click Find Refs at the bottom of the code window, or on the References tab
+// right-click > Add reference from file > C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.dll,
+// then Save and Compile again.
+//
 // The overlay calls the action by that name to get the current song when it loads. If you name it
 // something else, put the name in the editor's "Action name" box (or add &action=<name> to the link).
 // It starts nowplaying.ps1 in the background when Streamer.bot loads, reads the

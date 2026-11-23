@@ -23,7 +23,7 @@ Spotify ──> Windows media session ──> nowplaying.ps1 ──> "[Spotify] 
 
 1. **Copy the files.** Put `nowplaying.ps1` in `C:\StreamGPT\NowPlaying\`. (Somewhere else is fine, just change `ScriptPath` at the top of `NowPlaying.cs`.)
 2. **Turn on the WebSocket server.** In Streamer.bot go to Servers/Clients, WebSocket Server, tick Auto Start and click Start. The default `127.0.0.1:8080` is fine.
-3. **Create the action.** Make a new action named exactly `[Spotify] Now Playing`. Add the sub-action Core, C#, Execute C# Code, paste in all of `NowPlaying.cs`, and click Save and Compile. It starts by itself every time Streamer.bot opens, so it needs no trigger.
+3. **Create the action.** Make a new action named exactly `[Spotify] Now Playing`. Add the sub-action Core, C#, Execute C# Code, paste in all of `NowPlaying.cs`, click **Find Refs** at the bottom of the code window (this adds Windows' `System.dll`, which the code needs to start the watcher), then click Save and Compile. If it still says `Process` could not be found, add the reference by hand: References tab, right-click, Add reference from file, `C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.dll`. It starts by itself every time Streamer.bot opens, so it needs no trigger.
 4. **Add `!song` (optional).** Create a command `!song` and add it as a trigger on the same `[Spotify] Now Playing` action.
 5. **Design it.** Double-click `editor.html`, pick a theme and settings, and click **Copy link for OBS** (see "Design it live" below).
 6. **Add the overlay.** In OBS add a Browser Source, leave Local file unticked, paste the link into URL, and set the size to 800 x 400. Play a song.
