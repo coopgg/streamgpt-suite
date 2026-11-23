@@ -81,42 +81,56 @@ function Get-SourceName([string]$appId) {
   return $name
 }
 
-# Reads the cover into bytes. Windows' own DataReader first (it works from PowerShell 5.1);
-# the .NET stream bridge as a second try. Problems go to stderr, which Streamer.bot logs.
+# Reads the cover into bytes. Windows' own DataReader first, reading in chunks until the stream
+# runs out: PowerShell 5.1 often cannot see the stream's Size, which reads as 0, so it is not used.
+# The .NET stream bridge is a second try. Problems go to stderr, which Streamer.bot logs.
 $script:artError = $null
-function Get-ArtBytes($ras) {
+function Get-ArtBytes($thumb) {
   try {
-    $size = [uint32]$ras.Size
-    if ($size -eq 0) { return $null }
-    $reader = [Windows.Storage.Streams.DataReader]::new($ras.GetInputStreamAt(0))
-    $null = Await ($reader.LoadAsync($size)) ([uint32])
-    $bytes = New-Object byte[] $size
-    $reader.ReadBytes($bytes)
+    $ras = Await ($thumb.OpenReadAsync()) $StreamType
+    $reader = [Windows.Storage.Streams.DataReader]::new($ras)
+    $ms = New-Object System.IO.MemoryStream
+    while ($true) {
+      $n = [uint32](Await ($reader.LoadAsync(65536)) ([uint32]))
+      if ($n -eq 0) { break }
+      $chunk = New-Object byte[] $n
+      $reader.ReadBytes($chunk)
+      $ms.Write($chunk, 0, $chunk.Length)
+      if ($ms.Length -gt 2MB) { break }
+    }
     $reader.Dispose()
-    return ,$bytes
+    if ($ms.Length -gt 0) { return ,$ms.ToArray() }
+    $first = 'the cover was empty'
   } catch { $first = $_.Exception.Message }
   try {
+    # A fresh stream: the first try may have used this one up.
+    $ras = Await ($thumb.OpenReadAsync()) $StreamType
     $src = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($ras)
     $ms = New-Object System.IO.MemoryStream
     $src.CopyTo($ms)
     $src.Dispose()
-    return ,$ms.ToArray()
+    if ($ms.Length -gt 0) { return ,$ms.ToArray() }
+    throw 'the cover was empty'
   } catch { throw "DataReader: $first / stream: $($_.Exception.Message)" }
 }
 
+# Says once per problem why there is no cover, so a missing cover is never a mystery.
+function Write-ArtProblem([string]$msg) {
+  if ($msg -ne $script:artError) { [Console]::Error.WriteLine("nowplaying: $msg") }
+  $script:artError = $msg
+}
+
 function Get-ArtDataUri($props) {
-  if ($null -eq $props.Thumbnail) { return $null }
+  if ($null -eq $props.Thumbnail) { Write-ArtProblem 'the app has not shared a cover for this song (yet)'; return $null }
   try {
-    $ras = Await ($props.Thumbnail.OpenReadAsync()) $StreamType
-    $bytes = Get-ArtBytes $ras
-    if ($null -eq $bytes -or $bytes.Length -eq 0 -or $bytes.Length -gt 1MB) { return $null }
-    $ct = [string]$ras.ContentType
-    if (-not $ct -or -not $ct.StartsWith('image/')) { $ct = 'image/jpeg' }
+    $bytes = Get-ArtBytes $props.Thumbnail
+    if ($bytes.Length -gt 2MB) { Write-ArtProblem 'the cover is over 2 MB, skipped'; return $null }
+    # Tell PNG from JPEG by the first bytes (the stream's own type is often not visible from PowerShell).
+    $ct = if ($bytes.Length -gt 3 -and $bytes[0] -eq 0x89 -and $bytes[1] -eq 0x50) { 'image/png' } else { 'image/jpeg' }
+    $script:artError = $null
     return "data:$ct;base64," + [Convert]::ToBase64String($bytes)
   } catch {
-    $msg = "could not read the cover: " + $_.Exception.Message
-    if ($msg -ne $script:artError) { [Console]::Error.WriteLine("nowplaying: $msg") }
-    $script:artError = $msg
+    Write-ArtProblem ("could not read the cover: " + $_.Exception.Message)
     return $null
   }
 }
