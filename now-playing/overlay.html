@@ -28,6 +28,8 @@
     endpoint=/        Streamer.bot WebSocket endpoint
     password=         only if you turned on WebSocket authentication
     demo=0            1 = sample songs, for positioning without Streamer.bot
+    action=[Spotify] Now Playing   the Streamer.bot action's exact name, if you named it differently
+    only=             SMTC Bridge mode: use only these apps, e.g. only=spotify
     bridge=           read from SMTC Bridge instead of Streamer.bot, e.g. bridge=1
                       (uses 127.0.0.1:5000) or bridge=192.168.1.20:5000. Overlay only:
                       !song and the Song Changed trigger need the Streamer.bot setup.
@@ -253,7 +255,8 @@
     demo: q.get('demo') === '1',
     preview: q.get('preview') === '1',
     bridge: !q.has('bridge') || q.get('bridge') === '0' ? '' : (q.get('bridge') === '1' || q.get('bridge') === '' ? '127.0.0.1:5000' : q.get('bridge').replace(/^https?:\/\//, '').replace(/\/.*$/, '')),
-    action: q.get('action') || 'Now Playing'
+    action: q.get('action') || '[Spotify] Now Playing',
+    only: (q.get('only') || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean)
   };
 
   const $ = (id) => document.getElementById(id);
@@ -536,7 +539,7 @@
     let lastApp = null, emptySent = false;
 
     const toState = (data) => {
-      const list = (data && data.sessions) || [];
+      const list = ((data && data.sessions) || []).filter((x) => !opt.only.length || opt.only.some((o) => String(x.source_app_id || '').toLowerCase().includes(o)));
       const playing = list.filter((x) => x.playback_info && x.playback_info.PlaybackStatus === 4);
       const s = playing.find((x) => x.source_app_id === lastApp) || playing[0]
         || list.find((x) => x.source_app_id === data.current_session_id)

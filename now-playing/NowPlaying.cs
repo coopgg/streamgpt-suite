@@ -1,6 +1,8 @@
 // StreamGPT Now Playing: Streamer.bot C# action
 //
-// Paste this into an action named exactly "Now Playing" (Execute C# Code sub-action).
+// Paste this into an action named exactly "[Spotify] Now Playing" (Execute C# Code sub-action).
+// The overlay calls the action by that name to get the current song when it loads. If you name it
+// something else, put the name in the editor's "Action name" box (or add &action=<name> to the link).
 // It starts nowplaying.ps1 in the background when Streamer.bot loads, reads the
 // song info it prints, and broadcasts it to the overlay over the Streamer.bot
 // WebSocket server.
@@ -29,7 +31,10 @@ public class CPHInline
     // ---------- Settings ----------
     // Where nowplaying.ps1 lives.
     private const string ScriptPath = @"C:\StreamGPT\NowPlaying\nowplaying.ps1";
-    // Apps to skip, comma separated, matched against the app id. Example: "chrome,msedge"
+    // Only these apps are used, comma separated, matched against the app id. Everything else
+    // (browsers, YouTube, games...) is ignored. Set to "" to use any app.
+    private const string OnlyApps = "spotify";
+    // Apps to skip, comma separated, when OnlyApps is "". Example: "chrome,msedge"
     private const string IgnoreApps = "";
     // Chat reply for !song. {title} {artist} {album} {source} are filled in.
     private const string SongMessage = "Now playing: {title} by {artist} ({source})";
@@ -104,6 +109,7 @@ public class CPHInline
 
             string arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \""
                 + ScriptPath + "\" -ParentPid " + Process.GetCurrentProcess().Id;
+            if (!string.IsNullOrWhiteSpace(OnlyApps)) arguments += " -Only \"" + OnlyApps.Replace("\"", "") + "\"";
             if (!string.IsNullOrWhiteSpace(IgnoreApps)) arguments += " -Ignore \"" + IgnoreApps.Replace("\"", "") + "\"";
 
             var psi = new ProcessStartInfo
@@ -174,7 +180,7 @@ public class CPHInline
         }
         if (crashCount > 5)
         {
-            SafeLog("Watcher keeps exiting. Check the log lines above, then run the Now Playing action to try again.");
+            SafeLog("Watcher keeps exiting. Check the log lines above, then run the [Spotify] Now Playing action to try again.");
             return;
         }
         SafeLog("Watcher exited, restarting in 5 seconds");

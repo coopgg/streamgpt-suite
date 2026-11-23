@@ -7,7 +7,7 @@
   else that reports to Windows.
 
   It prints one JSON line to stdout every time something changes. The
-  Streamer.bot "Now Playing" action starts this script and reads those lines.
+  Streamer.bot "[Spotify] Now Playing" action starts this script and reads those lines.
 
   Test it by itself in a PowerShell window:
     powershell -ExecutionPolicy Bypass -File C:\StreamGPT\NowPlaying\nowplaying.ps1
@@ -16,6 +16,7 @@
 param(
   [int]$ParentPid = 0,        # exit when this process (Streamer.bot) closes
   [int]$IntervalMs = 1000,    # how often to check, in milliseconds
+  [string]$Only = "",         # comma separated app ids to use, nothing else, e.g. "spotify"
   [string]$Ignore = "",       # comma separated app ids to skip, e.g. "chrome,msedge"
   [int]$HeartbeatSec = 15     # resend while playing so overlays stay in sync
 )
@@ -44,10 +45,17 @@ function Await($op, [Type]$type) {
 }
 
 $IgnoreList = @($Ignore.Split(',') | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
+$OnlyList = @($Only.Split(',') | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
 
+# An app is skipped if it is on the ignore list, or if there is an only list and it is not on it.
 function Test-Ignored([string]$appId) {
+  $l = ([string]$appId).ToLowerInvariant()
+  if ($OnlyList.Count -gt 0) {
+    $allowed = $false
+    foreach ($o in $OnlyList) { if ($l.Contains($o)) { $allowed = $true } }
+    if (-not $allowed) { return $true }
+  }
   if (-not $appId) { return $false }
-  $l = $appId.ToLowerInvariant()
   foreach ($i in $IgnoreList) { if ($l.Contains($i)) { return $true } }
   return $false
 }

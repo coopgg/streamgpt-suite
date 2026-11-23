@@ -144,6 +144,11 @@
             <div><label class="label" for="port">Port</label><input type="number" id="port" value="8080"></div>
           </div>
           <div class="row">
+            <label class="label" for="action">Action name</label>
+            <input type="text" id="action" value="[Spotify] Now Playing">
+            <span class="hint">Exactly as it's named in Streamer.bot.</span>
+          </div>
+          <div class="row">
             <label class="label" for="password">WebSocket password</label>
             <input type="password" id="password" autocomplete="off">
             <span class="hint">Only if you turned on authentication in Streamer.bot.</span>
@@ -283,7 +288,7 @@
   const defaults = {
     mode: 'sample', via: 'sb', theme: 'field', rpm: '33.33', colorMode: 'auto', color: '#15171c', align: 'left', corners: 'round',
     scale: 1, source: true, time: true, progress: true, hide: 5, popup: 0, scene: 'dark',
-    host: '127.0.0.1', port: '8080', password: '', bridge: '127.0.0.1:5000', sample: 0
+    host: '127.0.0.1', port: '8080', password: '', bridge: '127.0.0.1:5000', action: '[Spotify] Now Playing', sample: 0
   };
   let st = Object.assign({}, defaults);
   try { Object.assign(st, JSON.parse(localStorage.getItem('np-editor') || '{}')); } catch (e) {}
@@ -313,10 +318,11 @@
   }
   function connParams() {
     const p = new URLSearchParams();
-    if (st.via === 'bridge') { p.set('bridge', st.bridge === '127.0.0.1:5000' ? '1' : st.bridge); return p; }
+    if (st.via === 'bridge') { p.set('bridge', st.bridge === '127.0.0.1:5000' ? '1' : st.bridge); p.set('only', 'spotify'); return p; }
     if (st.host && st.host !== '127.0.0.1') p.set('host', st.host);
     if (st.port && String(st.port) !== '8080') p.set('port', st.port);
     if (st.password) p.set('password', st.password);
+    if (st.action && st.action !== '[Spotify] Now Playing') p.set('action', st.action);
     return p;
   }
   const overlayBase = () => location.href.split(/[?#]/)[0].replace(/[^/]*$/, 'overlay.html');
@@ -410,6 +416,7 @@
   bindValue('port', 'port');
   bindValue('password', 'password');
   bindValue('bridge', 'bridge');
+  bindValue('action', 'action');
   ['source', 'time', 'progress'].forEach((k) => $(k).addEventListener('change', () => { st[k] = $(k).checked; update(); }));
 
   const sel = $('sample');
@@ -441,7 +448,7 @@
 
   // ---------- start ----------
   $('scale').value = st.scale; $('hide').value = st.hide; $('popup').value = st.popup; $('color').value = st.color;
-  $('host').value = st.host; $('port').value = st.port; $('bridge').value = st.bridge;
+  $('host').value = st.host; $('port').value = st.port; $('bridge').value = st.bridge; $('action').value = st.action;
   $('source').checked = st.source; $('time').checked = st.time; $('progress').checked = st.progress;
   pickSample(Number(st.sample) || 0);
   paint();
