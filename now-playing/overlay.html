@@ -94,7 +94,9 @@
   .t-strip .title { font-size: 21px; flex: 0 1 auto; min-width: 0; }
   .t-strip .artist { font-size: 14px; flex: 1 1 0; min-width: 40px; margin: 0; }
   .t-strip .info { display: none; }
-  .t-strip .bar { height: 3px; }
+  .t-strip .field { position: static; }
+  .t-strip .bar { height: 3px; left: 50px; }
+  .t-strip .np.no-art .bar { left: 0; }
 
   /* ---------- bare: no field, text straight on the scene ---------- */
   .t-bare .np { background: transparent; width: 480px; --ink: #fff; --ink-2: rgba(255, 255, 255, 0.88); --track: rgba(0, 0, 0, 0.5); }
@@ -257,7 +259,28 @@
           }
           const list = [...buckets.values()].map((b) => ({ n: b.n, c: [b.r / b.n, b.g / b.n, b.b / b.n].map(Math.round) }));
           list.sort((x, y) => y.n - x.n);
-          const ground = list[0] ? list[0].c : null;
+          // The field colour: group the pixels into the cover's four main colours and take the biggest.
+          // Grouping copes with soft gradients that would split across many small colour ranges.
+          const pts = [];
+          for (let i = 0; i < px.length; i += 4) if (px[i + 3] >= 128) pts.push([px[i], px[i + 1], px[i + 2]]);
+          let ground = list[0] ? list[0].c : null;
+          if (pts.length > 16) {
+            const byLight = pts.slice().sort((x, y) => lum(x) - lum(y));
+            let cents = [0.125, 0.375, 0.625, 0.875].map((f) => byLight[Math.floor(f * (byLight.length - 1))].slice());
+            let groups = [];
+            for (let it = 0; it < 10; it++) {
+              groups = cents.map(() => ({ n: 0, s: [0, 0, 0] }));
+              for (const c of pts) {
+                let bi = 0, bd = Infinity;
+                for (let k = 0; k < cents.length; k++) { const d = dist(c, cents[k]); if (d < bd) { bd = d; bi = k; } }
+                const g = groups[bi]; g.n++; g.s[0] += c[0]; g.s[1] += c[1]; g.s[2] += c[2];
+              }
+              cents = groups.map((g, k) => g.n ? g.s.map((v) => Math.round(v / g.n)) : cents[k]);
+            }
+            let big = 0;
+            groups.forEach((g, k) => { if (g.n > groups[big].n) big = k; });
+            ground = cents[big];
+          }
           let vivid = null, best = 0;
           for (const b of list) {
             if (b.n < total * 0.01) continue;
@@ -281,7 +304,7 @@
       if (!state || state.art !== art) return;
       if (!r) return applyPalette(palette(DEFAULT_GROUND, DEFAULT_ACCENT));
       const p = palette(r.ground, r.vivid);
-      p.vivid = r.vivid || DEFAULT_ACCENT;
+      p.vivid = r.vivid || [255, 255, 255]; // bare and glow: white when the cover has no strong colour
       applyPalette(p);
     });
   }
