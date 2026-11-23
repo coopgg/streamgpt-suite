@@ -47,6 +47,10 @@ Add these to the end of the URL, for example `overlay.html?theme=strip&align=rig
 | `password` | none | Only if you turned on WebSocket authentication |
 | `demo` | `0` | `1` cycles fake songs |
 
+## Already running SMTC Bridge?
+
+If you (or someone you set this up for) already use nutty's [SMTC Bridge](https://github.com/nuttylmao/smtc-bridge) tray app, the overlay can read from it directly, with no Streamer.bot needed: add `?bridge=1` to the overlay URL (it reads `http://127.0.0.1:5000`), or `?bridge=192.168.1.20:5000` for another PC. All the themes and colors work the same. `!song`, the globals and the Song Changed trigger need the Streamer.bot setup above.
+
 ## Settings in `NowPlaying.cs`
 
 - `IgnoreApps`: apps to skip, comma separated, e.g. `"chrome,msedge"` if you watch YouTube videos in the browser and do not want them showing up.

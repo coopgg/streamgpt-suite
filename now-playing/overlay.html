@@ -26,6 +26,9 @@
     endpoint=/        Streamer.bot WebSocket endpoint
     password=         only if you turned on WebSocket authentication
     demo=0            1 = sample songs, for positioning without Streamer.bot
+    bridge=           read from SMTC Bridge instead of Streamer.bot, e.g. bridge=1
+                      (uses 127.0.0.1:5000) or bridge=192.168.1.20:5000. Overlay only:
+                      !song and the Song Changed trigger need the Streamer.bot setup.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -154,6 +157,7 @@
     time: q.get('time') !== '0',
     progress: q.get('progress') !== '0',
     demo: q.get('demo') === '1',
+    bridge: !q.has('bridge') || q.get('bridge') === '0' ? '' : (q.get('bridge') === '1' || q.get('bridge') === '' ? '127.0.0.1:5000' : q.get('bridge').replace(/^https?:\/\//, '').replace(/\/.*$/, '')),
     action: q.get('action') || 'Now Playing'
   };
 
@@ -266,7 +270,7 @@
   colourFor(null);
 
   // ---------- rendering ----------
-  let state = null, basePos = 0, baseAt = 0, trackKey = '', hideTimer = null;
+  let state = null, basePos = 0, baseAt = 0, trackKey = '', hideTimer = null, shownArt = null;
 
   const fmt = (s) => {
     s = Math.max(0, Math.floor(s || 0));
@@ -302,6 +306,7 @@
 
   function render(d) {
     if (!d || d.type !== 'nowplaying') return;
+    const wasPlaying = !!(state && state.playing);
     state = d;
     basePos = d.position || 0;
     baseAt = performance.now();
@@ -317,10 +322,14 @@
       setLine($('artist'), d.artist || d.album || '');
       $('src').textContent = d.source || '';
       if (d.art) {
-        $('cover').style.backgroundImage = `url("${d.art}")`;
-        np.classList.remove('no-art');
-        colourFor(d.art);
+        if (d.art !== shownArt) {
+          shownArt = d.art;
+          $('cover').style.backgroundImage = `url("${d.art}")`;
+          np.classList.remove('no-art');
+          colourFor(d.art);
+        }
       } else if (newTrack) {
+        shownArt = null;
         $('cover').style.backgroundImage = '';
         np.classList.add('no-art');
         colourFor(null);
@@ -333,10 +342,10 @@
 
     if (d.playing) {
       if (opt.popup > 0) {
-        if (newTrack || (!np.classList.contains('show') && d.wasPaused)) { show(true); scheduleHide(opt.popup); }
+        if (newTrack || (!np.classList.contains('show') && !wasPlaying)) { show(true); scheduleHide(opt.popup); }
       } else { show(true); scheduleHide(0); }
     } else if (opt.hide > 0) {
-      if (np.classList.contains('show')) scheduleHide(opt.hide);
+      if (np.classList.contains('show') && (wasPlaying || newTrack)) scheduleHide(opt.hide);
     } else if (opt.popup === 0) {
       show(true); scheduleHide(0);
     }
@@ -372,6 +381,58 @@
     };
     next();
     if (!q.has('song')) setInterval(next, 9000);
+    return;
+  }
+
+  // ---------- SMTC Bridge (optional, instead of Streamer.bot) ----------
+  if (opt.bridge) {
+    const names = [['spotify', 'Spotify'], ['applemusic', 'Apple Music'], ['itunes', 'iTunes'], ['youtube-music', 'YouTube Music'],
+      ['youtubemusic', 'YouTube Music'], ['tidal', 'TIDAL'], ['deezer', 'Deezer'], ['amazon', 'Amazon Music'], ['cider', 'Cider'],
+      ['plexamp', 'Plexamp'], ['foobar', 'foobar2000'], ['musicbee', 'MusicBee'], ['winamp', 'Winamp'], ['aimp', 'AIMP'], ['vlc', 'VLC'],
+      ['zunemusic', 'Media Player'], ['soundcloud', 'SoundCloud'], ['msedge', 'Edge'], ['chrome', 'Chrome'], ['firefox', 'Firefox'],
+      ['308046b0af4a39cb', 'Firefox'], ['brave', 'Brave'], ['opera', 'Opera'], ['vivaldi', 'Vivaldi']];
+    const sourceName = (id) => {
+      const l = (id || '').toLowerCase();
+      const hit = names.find(([k]) => l.includes(k));
+      if (hit) return hit[1];
+      return (id || '').split('!')[0].replace(/\.exe$/i, '').split('_')[0].split('.').pop();
+    };
+    const STATUS = ['Closed', 'Opened', 'Changing', 'Stopped', 'Playing', 'Paused'];
+    let lastApp = null, emptySent = false;
+
+    const toState = (data) => {
+      const list = (data && data.sessions) || [];
+      const playing = list.filter((x) => x.playback_info && x.playback_info.PlaybackStatus === 4);
+      const s = playing.find((x) => x.source_app_id === lastApp) || playing[0]
+        || list.find((x) => x.source_app_id === data.current_session_id)
+        || list.find((x) => x.source_app_id === lastApp) || list[0];
+      if (!s) return null;
+      lastApp = s.source_app_id;
+      const m = s.media_properties || {}, pb = s.playback_info || {}, tl = s.timeline_properties || {};
+      const isPlaying = pb.PlaybackStatus === 4;
+      const duration = Math.max(0, ((tl.EndTime || 0) - (tl.StartTime || 0)) / 1000);
+      let position = (tl.Position || 0) / 1000;
+      const updated = tl.LastUpdatedTime ? Date.parse(String(tl.LastUpdatedTime).replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1')) : NaN;
+      if (isPlaying && !isNaN(updated) && updated > 946684800000) position += Math.max(0, (Date.now() - updated) / 1000);
+      if (duration > 0) position = Math.min(position, duration);
+      const artist = m.Artist && m.Artist !== 'Unknown' ? m.Artist : (m.AlbumArtist && m.AlbumArtist !== 'Unknown' ? m.AlbumArtist : '');
+      return {
+        type: 'nowplaying', playing: isPlaying, status: STATUS[pb.PlaybackStatus] || 'Unknown',
+        title: m.Title || '', artist, album: m.AlbumTitle || '', source: sourceName(s.source_app_id), appId: s.source_app_id,
+        position, duration, art: m.Thumbnail || null
+      };
+    };
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`http://${opt.bridge}/now-playing`, { cache: 'no-store' });
+        const st = toState(await res.json());
+        if (st) { emptySent = false; render(st); }
+        else if (!emptySent) { emptySent = true; render({ type: 'nowplaying', playing: false, status: 'None', title: '' }); }
+      } catch (e) { /* SMTC Bridge not running yet; keep trying */ }
+      setTimeout(poll, 1000);
+    };
+    poll();
     return;
   }
 
@@ -428,7 +489,6 @@
       else if (msg.type === 'nowplaying') data = msg;
       if (data && typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { data = null; } }
       if (data && data.type === 'nowplaying') {
-        data.wasPaused = state ? !state.playing : true;
         render(data);
       }
     };
