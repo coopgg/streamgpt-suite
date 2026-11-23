@@ -99,6 +99,18 @@ public class CPHInline
         if (args.TryGetValue("npMode", out raw) && raw != null) mode = raw.ToString().Trim().ToLowerInvariant();
         else if (args.ContainsKey("command")) mode = "song";
 
+        // Whatever ran the action (!song, an overlay connecting, the editor), make sure the watcher
+        // is running: recompiling the action stops it, and nothing else would start it again.
+        if (mode != "stop" && mode != "")
+        {
+            bool started = EnsureWatcher();
+            // !song right after a restart: give the watcher a moment to report the current song.
+            if (started && mode == "song")
+            {
+                for (int i = 0; i < 30 && latestJson == null; i++) System.Threading.Thread.Sleep(100);
+            }
+        }
+
         switch (mode)
         {
             case "resend":
@@ -202,6 +214,25 @@ public class CPHInline
                 SafeLog("Could not start PowerShell: " + ex.Message);
             }
         }
+    }
+
+    // Starts the watcher if it is not running. Returns true if it had to start it.
+    private bool EnsureWatcher()
+    {
+        lock (gate)
+        {
+            if (watcher != null)
+            {
+                bool exited = true;
+                try { exited = watcher.HasExited; } catch { }
+                if (!exited) return false;
+            }
+        }
+        SafeLog("Watcher was not running; starting it");
+        lock (gate) { latestJson = null; latest = null; } // forget the stale song; the watcher reports the real one
+        crashCount = 0;
+        StartWatcher();
+        return true;
     }
 
     private void StopWatcher()
