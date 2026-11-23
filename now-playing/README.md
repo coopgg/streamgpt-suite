@@ -25,9 +25,10 @@ Music app ──> Windows media session ──> nowplaying.ps1 ──> "Now Play
 2. **Turn on the WebSocket server.** In Streamer.bot go to Servers/Clients, WebSocket Server, tick Auto Start and click Start. The default `127.0.0.1:8080` is fine.
 3. **Create the action.** Make a new action named exactly `Now Playing`. Add the sub-action Core, C#, Execute C# Code, paste in all of `NowPlaying.cs`, and click Save and Compile. It starts by itself every time Streamer.bot opens, so it needs no trigger.
 4. **Add `!song` (optional).** Create a command `!song` and add it as a trigger on the same `Now Playing` action.
-5. **Add the overlay.** In OBS add a Browser Source, tick Local file, pick `overlay.html`, and set the size to 800 x 200. Play a song.
+5. **Design it.** Double-click `editor.html`, pick a theme and settings, and click **Copy link for OBS** (see "Design it live" below).
+6. **Add the overlay.** In OBS add a Browser Source, leave Local file unticked, paste the link into URL, and set the size to 800 x 400. Play a song.
 
-To position the overlay without playing music, use the URL `overlay.html?demo=1` (untick Local file and paste the full `file:///C:/...` path with `?demo=1` on the end).
+Keep `nowplaying.ps1` where `ScriptPath` points, and keep `overlay.html` and `editor.html` together in one folder (any folder; the link points at wherever they are).
 
 ## Design it live
 
