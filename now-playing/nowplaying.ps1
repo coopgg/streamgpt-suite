@@ -28,6 +28,7 @@ Add-Type -AssemblyName System.Runtime.WindowsRuntime
 $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
 $null = [Windows.Storage.Streams.IRandomAccessStreamWithContentType, Windows.Storage.Streams, ContentType = WindowsRuntime]
 $null = [Windows.Storage.Streams.DataReader, Windows.Storage.Streams, ContentType = WindowsRuntime]
+$null = [Windows.Storage.Streams.IInputStream, Windows.Storage.Streams, ContentType = WindowsRuntime]
 
 $MgrType    = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]
 $PropsType  = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties]
@@ -81,14 +82,30 @@ function Get-SourceName([string]$appId) {
   return $name
 }
 
-# Reads the cover into bytes. Windows' own DataReader first, reading in chunks until the stream
-# runs out: PowerShell 5.1 often cannot see the stream's Size, which reads as 0, so it is not used.
-# The .NET stream bridge is a second try. Problems go to stderr, which Streamer.bot logs.
+# Reads the cover into bytes.
+# Windows hands the cover over as a plain COM object, and PowerShell 5.1 will not convert that to
+# the IInputStream type these methods take ("Cannot convert System.__ComObject"). .NET reflection
+# will (it asks the object itself, the same way Await works), so both methods are called through it.
+# 1. The .NET stream bridge, read to the end. 2. Windows' DataReader, read in chunks (never trusting
+# the stream's Size, which PowerShell often cannot see). Problems go to stderr, which Streamer.bot logs.
+$IInputStream = [Windows.Storage.Streams.IInputStream]
+$AsStreamForRead = [System.IO.WindowsRuntimeStreamExtensions].GetMethod('AsStreamForRead', [Type[]]@($IInputStream))
+$DataReaderNew = [Windows.Storage.Streams.DataReader].GetConstructor([Type[]]@($IInputStream))
 $script:artError = $null
 function Get-ArtBytes($thumb) {
   try {
     $ras = Await ($thumb.OpenReadAsync()) $StreamType
-    $reader = [Windows.Storage.Streams.DataReader]::new($ras)
+    $src = $AsStreamForRead.Invoke($null, @($ras))
+    $ms = New-Object System.IO.MemoryStream
+    $src.CopyTo($ms)
+    $src.Dispose()
+    if ($ms.Length -gt 0) { return ,$ms.ToArray() }
+    $first = 'the cover was empty'
+  } catch { $first = $_.Exception.Message }
+  try {
+    # A fresh stream: the first try may have used this one up.
+    $ras = Await ($thumb.OpenReadAsync()) $StreamType
+    $reader = $DataReaderNew.Invoke(@($ras))
     $ms = New-Object System.IO.MemoryStream
     while ($true) {
       $n = [uint32](Await ($reader.LoadAsync(65536)) ([uint32]))
@@ -100,18 +117,8 @@ function Get-ArtBytes($thumb) {
     }
     $reader.Dispose()
     if ($ms.Length -gt 0) { return ,$ms.ToArray() }
-    $first = 'the cover was empty'
-  } catch { $first = $_.Exception.Message }
-  try {
-    # A fresh stream: the first try may have used this one up.
-    $ras = Await ($thumb.OpenReadAsync()) $StreamType
-    $src = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($ras)
-    $ms = New-Object System.IO.MemoryStream
-    $src.CopyTo($ms)
-    $src.Dispose()
-    if ($ms.Length -gt 0) { return ,$ms.ToArray() }
     throw 'the cover was empty'
-  } catch { throw "DataReader: $first / stream: $($_.Exception.Message)" }
+  } catch { throw "stream: $first / DataReader: $($_.Exception.Message)" }
 }
 
 # Says once per problem why there is no cover, so a missing cover is never a mystery.
