@@ -65,6 +65,7 @@ public class CPHInline
     private static Process watcher;
     private static bool stopping;
     private static bool coverLogged;
+    private static bool firstLineLogged;
     private static string latestArt;
     private static string latestArtId;
     private static int crashCount;
@@ -192,6 +193,7 @@ public class CPHInline
                 p.BeginErrorReadLine();
                 watcher = p;
                 owner = this;
+                firstLineLogged = false;
                 CPH.SetGlobalVar(PidGlobal, p.Id, false);
                 SafeLog("Watcher started (pid " + p.Id + ")");
             }
@@ -255,7 +257,15 @@ public class CPHInline
 
         JObject o;
         try { o = JObject.Parse(line); }
-        catch { return; }
+        catch (Exception ex) { SafeLog("Could not read a line from the watcher: " + ex.Message); return; }
+
+        // The first line after each start confirms the watcher is working.
+        if (!firstLineLogged)
+        {
+            firstLineLogged = true;
+            string t = (string)o["title"];
+            SafeLog("Watcher is sending songs. First: " + (string.IsNullOrEmpty(t) ? "nothing playing" : t));
+        }
 
         string title = (string)o["title"] ?? "";
         string artist = (string)o["artist"] ?? "";

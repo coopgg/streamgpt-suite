@@ -599,6 +599,7 @@
 
   // Hide, then show again, so the in= and out= animations can be watched (the editor's "Play it").
   function replay() {
+    if (!state || !state.title || (state.ad && opt.ads === 'hide')) return; // nothing to show yet
     if (!np.classList.contains('show')) { show(true); return; }
     show(false);
     setTimeout(() => show(true), 350 * SPEEDS[opt.speed] + 500);
