@@ -13,7 +13,8 @@
     endpoint=/        Streamer.bot WebSocket endpoint
     password=         only if you turned on WebSocket authentication
     align=left        left or right
-    accent=ff5a5a     hex color for the progress bar and label
+    theme=card        card, compact, minimal or spotlight
+    accent=auto       auto = match the album art, or a hex color like ff5a5a
     scale=1           size multiplier, e.g. 1.5
     hide=5            seconds after pausing before the card hides, 0 = never hide
     popup=0           seconds to show after each new song then hide, 0 = always show while playing
@@ -95,6 +96,42 @@
   .no-progress .bar-row { display: none; }
   .no-time .time { display: none; }
   .no-source .src { display: none; }
+
+  /* Accent colour fades smoothly when it changes with the album art. */
+  @property --accent { syntax: "<color>"; inherits: true; initial-value: #ff5a5a; }
+  :root { transition: --accent 1.2s ease; }
+  .card { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  /* ---------- theme: compact (a slim pill) ---------- */
+  .t-compact .card { width: 360px; padding: 7px 16px 7px 7px; border-radius: 999px; gap: 11px; }
+  .t-compact .art { width: 42px; height: 42px; border-radius: 50%; }
+  .t-compact .art svg { width: 20px; height: 20px; }
+  .t-compact .art.has-img { animation: spin 14s linear infinite; }
+  .t-compact .paused .art.has-img { animation-play-state: paused; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .t-compact .label { display: none; }
+  .t-compact .title { font-size: 14.5px; }
+  .t-compact .artist { font-size: 12.5px; }
+  .t-compact .meta { position: static; }
+  .t-compact .line { position: relative; z-index: 1; }
+  .t-compact .bar-row { position: absolute; left: 60px; right: 22px; bottom: 5px; margin: 0; z-index: 1; }
+  .t-compact .bar { height: 2px; background: rgba(255, 255, 255, 0.1); }
+  .t-compact .time { display: none; }
+
+  /* ---------- theme: minimal (no box, just text) ---------- */
+  .t-minimal .card { background: transparent; border: none; box-shadow: none; padding: 4px; width: 440px; }
+  .t-minimal .backdrop { display: none; }
+  .t-minimal .art { width: 64px; height: 64px; }
+  .t-minimal .meta { text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.9); }
+  .t-minimal .artist, .t-minimal .time, .t-minimal .label .src { color: rgba(255, 255, 255, 0.85); }
+  .t-minimal .bar { background: rgba(0, 0, 0, 0.45); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+
+  /* ---------- theme: spotlight (big cover, text underneath) ---------- */
+  .t-spotlight .card { flex-direction: column; align-items: stretch; width: 260px; padding: 14px; gap: 12px; border-radius: 18px; }
+  .t-spotlight .art { width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; }
+  .t-spotlight .art svg { width: 64px; height: 64px; }
+  .t-spotlight .backdrop { opacity: 0.5; }
+  .t-spotlight .title { font-size: 18px; }
 </style>
 </head>
 <body>
@@ -121,7 +158,8 @@
     endpoint: q.get('endpoint') || '/',
     password: q.get('password') || '',
     align: q.get('align') === 'right' ? 'right' : 'left',
-    accent: (q.get('accent') || '').replace(/[^0-9a-f]/gi, ''),
+    theme: ['card', 'compact', 'minimal', 'spotlight'].includes(q.get('theme')) ? q.get('theme') : 'card',
+    accent: (q.get('accent') || 'auto').toLowerCase() === 'auto' ? 'auto' : (q.get('accent') || '').replace(/[^0-9a-f]/gi, ''),
     scale: parseFloat(q.get('scale')) || 1,
     hide: q.has('hide') ? Math.max(0, parseFloat(q.get('hide')) || 0) : 5,
     popup: Math.max(0, parseFloat(q.get('popup')) || 0),
@@ -135,7 +173,9 @@
   const $ = (id) => document.getElementById(id);
   const root = document.documentElement;
   const card = $('card');
-  if (opt.accent.length === 3 || opt.accent.length === 6) root.style.setProperty('--accent', '#' + opt.accent);
+  const fallbackAccent = (opt.accent.length === 3 || opt.accent.length === 6) ? '#' + opt.accent : '#ff5a5a';
+  root.style.setProperty('--accent', fallbackAccent);
+  $('stage').classList.add('t-' + opt.theme);
   root.style.setProperty('--scale', opt.scale);
   if (opt.align === 'right') $('stage').classList.add('right');
   if (!opt.source) card.classList.add('no-source');
@@ -166,6 +206,60 @@
     });
   }
 
+  // Pick the most vivid common colour in the cover, then brighten it so it reads on a dark card.
+  const accentCache = new Map();
+  function accentFromArt(src) {
+    return new Promise((resolve) => {
+      if (accentCache.has(src)) return resolve(accentCache.get(src));
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const n = 40, c = document.createElement('canvas');
+          c.width = c.height = n;
+          const ctx = c.getContext('2d', { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0, n, n);
+          const px = ctx.getImageData(0, 0, n, n).data;
+          const buckets = new Map();
+          for (let i = 0; i < px.length; i += 4) {
+            if (px[i + 3] < 128) continue;
+            const [h, sat, l] = rgbToHsl(px[i], px[i + 1], px[i + 2]);
+            if (sat < 0.25 || l < 0.12 || l > 0.92) continue;
+            const key = Math.round(h * 24) % 24;
+            const b = buckets.get(key) || { n: 0, h: 0, s: 0, l: 0 };
+            const w = sat * sat;
+            b.n += w; b.h += h * w; b.s += sat * w; b.l += l * w;
+            buckets.set(key, b);
+          }
+          let best = null;
+          for (const b of buckets.values()) if (!best || b.n > best.n) best = b;
+          let color = null;
+          if (best && best.n > 4) {
+            const h = best.h / best.n, sat = Math.min(1, best.s / best.n + 0.1);
+            const l = Math.min(0.76, Math.max(0.66, best.l / best.n));
+            color = `hsl(${Math.round(h * 360)} ${Math.round(sat * 100)}% ${Math.round(l * 100)}%)`;
+          }
+          accentCache.set(src, color);
+          resolve(color);
+        } catch (e) { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+    if (max === min) return [0, 0, l];
+    const d = max - min, sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [h / 6, sat, l];
+  }
+  function applyAccent(art) {
+    if (opt.accent !== 'auto') return;
+    if (!art) { root.style.setProperty('--accent', fallbackAccent); return; }
+    accentFromArt(art).then((c) => { if (state && state.art === art) root.style.setProperty('--accent', c || fallbackAccent); });
+  }
+
   function show(on) { card.classList.toggle('show', on); }
 
   function scheduleHide(seconds) {
@@ -194,7 +288,9 @@
         art.style.backgroundImage = url;
         $('backdrop').style.backgroundImage = url;
         art.classList.add('has-img');
+        applyAccent(d.art);
       } else if (newTrack) {
+        applyAccent(null);
         art.style.backgroundImage = '';
         $('backdrop').style.backgroundImage = '';
         art.classList.remove('has-img');

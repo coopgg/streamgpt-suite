@@ -30,12 +30,13 @@ To position the overlay without playing music, use the URL `overlay.html?demo=1`
 
 ## Overlay options
 
-Add these to the end of the URL, for example `overlay.html?align=right&accent=7ddc9a&hide=0`.
+Add these to the end of the URL, for example `overlay.html?theme=compact&align=right&hide=0`.
 
 | Option | Default | What it does |
 | --- | --- | --- |
+| `theme` | `card` | `card` (art beside the text), `compact` (a slim pill with a spinning cover), `minimal` (no box, just text over your scene) or `spotlight` (big cover with text underneath) |
+| `accent` | `auto` | `auto` picks the color from each song's album art and fades between them. Or set a fixed hex color like `ff5a5a`. |
 | `align` | `left` | `left` or `right` |
-| `accent` | `ff5a5a` | Hex color for the label and progress bar |
 | `scale` | `1` | Size multiplier, e.g. `1.5` |
 | `hide` | `5` | Seconds after you pause before the card hides. `0` keeps it up. |
 | `popup` | `0` | Show for this many seconds on each new song, then hide. `0` shows it the whole time music plays. |
