@@ -12,15 +12,16 @@
   whichever ink (light or dark) reads best on it.
 
   URL options (all optional), e.g. overlay.html?theme=strip&align=right
-    theme=field       field, strip, bare, poster or glow
+    theme=field       field, strip, bare, poster, glow or vinyl
     color=auto        auto = the field takes the album art's colour, or a fixed hex like 15171c
     align=left        left or right
     scale=1           size multiplier, e.g. 1.5
     hide=5            seconds after pausing before it hides, 0 = never hide
     popup=0           seconds to show after each new song then hide, 0 = always show while playing
     source=1          show the app name (Spotify, Chrome...), 0 to hide
-    time=1            show elapsed and total time, 0 to hide
-    progress=1        show the progress bar, 0 to hide
+    time=1            show elapsed and total time, 0 to hide (vinyl: off unless set)
+    progress=1        show the progress bar, 0 to hide (vinyl: off unless set)
+    rpm=33            vinyl only: how fast the record turns (33, 45, or slower like 10)
     host=127.0.0.1    Streamer.bot WebSocket server address
     port=8080         Streamer.bot WebSocket server port
     endpoint=/        Streamer.bot WebSocket endpoint
@@ -59,8 +60,9 @@
   }
   .np.show { opacity: 1; translate: 0 0; }
 
+  .cover-wrap { flex: none; display: flex; position: relative; }
   .cover { width: 108px; aspect-ratio: 1; flex: none; background: center / cover no-repeat; }
-  .np.no-art .cover { display: none; }
+  .np.no-art .cover-wrap { display: none; }
 
   .field {
     position: relative; flex: 1; min-width: 0;
@@ -108,7 +110,7 @@
 
   /* ---------- poster: big cover, field underneath ---------- */
   .t-poster .np { flex-direction: column; width: 280px; }
-  .t-poster .cover { width: 100%; }
+  .t-poster .cover-wrap, .t-poster .cover { width: 100%; }
   .t-poster .field { padding: 16px 20px 22px; }
   .t-poster .title { font-size: 32px; }
 
@@ -130,9 +132,33 @@
   .t-glow .field > :not(.bar) { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.55); } /* taste-skill-ignore */
   .t-glow .bar { position: static; margin-top: 10px; }
 
+  /* ---------- vinyl: the cover is the record's centre label, and the record turns ---------- */
+  .t-vinyl .np { width: 470px; --disc: 124px; }
+  .t-vinyl .np.no-art .cover-wrap { display: flex; }
+  .t-vinyl .cover-wrap { padding: 12px 0 12px 12px; }
+  .t-vinyl .cover {
+    position: relative; width: var(--disc); border-radius: 50%;
+    /* The record itself, drawn in code: a shiny rim (so it shows on a black field) over the grooves. */
+    background: radial-gradient(circle closest-side, transparent 95%, #45454c 96.5%, #1c1c20 100%), repeating-radial-gradient(circle, #1d1d20 0 1px, #0b0b0c 1px 3px) !important; /* taste-skill-ignore */
+    animation: spin var(--spin, 1.8s) linear infinite;
+  }
+  .t-vinyl .cover::before {
+    content: ""; position: absolute; inset: 24%; border-radius: 50%;
+    background: var(--accent) var(--art, none) center / cover no-repeat;
+  }
+  .t-vinyl .cover::after { content: ""; position: absolute; inset: 47.6%; border-radius: 50%; background: var(--ground); }
+  /* Light catching the grooves: it stays still while the record turns under it. */
+  .t-vinyl .cover-wrap::after {
+    content: ""; position: absolute; top: 12px; left: 12px; width: var(--disc); aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+    background: conic-gradient(from 20deg, transparent 0 8%, rgba(255, 255, 255, 0.13) 13%, transparent 19% 58%, rgba(255, 255, 255, 0.09) 63%, transparent 69%); /* taste-skill-ignore */
+  }
+  .t-vinyl .info { justify-content: flex-start; }
+  @keyframes spin { to { rotate: 360deg; } }
+
   /* ---------- new song: the text rises in, the cover fades up ---------- */
   @media (prefers-reduced-motion: no-preference) {
     .np.swap .cover { animation: fade 0.5s ease both; }
+    .t-vinyl .np.swap .cover { animation: spin var(--spin, 1.8s) linear infinite; }
     .np.swap .title { animation: rise 0.5s var(--ease) both; }
     .np.swap .artist { animation: rise 0.5s var(--ease) 0.07s both; }
     .np.swap .info { animation: rise 0.5s var(--ease) 0.14s both; }
@@ -141,13 +167,16 @@
   @keyframes fade { from { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) {
     .np { translate: none; transition: opacity 0.2s linear; }
+    .t-vinyl .cover { animation: none; }
   }
+  /* After the new-song rules, which restart the spin: a paused record stops where it is. */
+  .t-vinyl .np.paused .cover { animation-play-state: paused; }
 </style>
 </head>
 <body>
 <div class="stage" id="stage">
   <div class="np no-art" id="np" role="status" aria-live="polite">
-    <div class="cover" id="cover"></div>
+    <div class="cover-wrap"><div class="cover" id="cover"></div></div>
     <div class="field">
       <p class="line title" id="title"><span></span></p>
       <p class="line artist" id="artist"><span></span></p>
@@ -160,23 +189,34 @@
 (() => {
   const q = new URLSearchParams(location.search);
   const aliases = { card: 'field', compact: 'strip', minimal: 'bare', spotlight: 'poster' };
-  const themeIn = aliases[q.get('theme')] || q.get('theme');
-  const colorIn = (q.get('color') || q.get('accent') || 'auto').toLowerCase();
+  const THEMES = ['field', 'strip', 'bare', 'poster', 'glow', 'vinyl'];
+  // Display settings. Parsed by a function so the editor page can change them while the overlay runs.
+  function readLook(p) {
+    const t = aliases[p.get('theme')] || p.get('theme');
+    const theme = THEMES.includes(t) ? t : 'field';
+    const colorIn = (p.get('color') || p.get('accent') || 'auto').toLowerCase();
+    const vinyl = theme === 'vinyl';
+    return {
+      theme,
+      color: colorIn === 'auto' ? 'auto' : colorIn.replace(/[^0-9a-f]/g, ''),
+      align: p.get('align') === 'right' ? 'right' : 'left',
+      scale: Math.min(4, Math.max(0.25, parseFloat(p.get('scale')) || 1)),
+      hide: p.has('hide') ? Math.max(0, parseFloat(p.get('hide')) || 0) : 5,
+      popup: Math.max(0, parseFloat(p.get('popup')) || 0),
+      source: p.get('source') !== '0',
+      time: p.has('time') ? p.get('time') !== '0' : !vinyl,
+      progress: p.has('progress') ? p.get('progress') !== '0' : !vinyl,
+      rpm: Math.min(78, Math.max(2, parseFloat(p.get('rpm')) || 33.33))
+    };
+  }
   const opt = {
+    ...readLook(q),
     host: q.get('host') || '127.0.0.1',
     port: q.get('port') || '8080',
     endpoint: q.get('endpoint') || '/',
     password: q.get('password') || '',
-    theme: ['field', 'strip', 'bare', 'poster', 'glow'].includes(themeIn) ? themeIn : 'field',
-    color: colorIn === 'auto' ? 'auto' : colorIn.replace(/[^0-9a-f]/g, ''),
-    align: q.get('align') === 'right' ? 'right' : 'left',
-    scale: parseFloat(q.get('scale')) || 1,
-    hide: q.has('hide') ? Math.max(0, parseFloat(q.get('hide')) || 0) : 5,
-    popup: Math.max(0, parseFloat(q.get('popup')) || 0),
-    source: q.get('source') !== '0',
-    time: q.get('time') !== '0',
-    progress: q.get('progress') !== '0',
     demo: q.get('demo') === '1',
+    preview: q.get('preview') === '1',
     bridge: !q.has('bridge') || q.get('bridge') === '0' ? '' : (q.get('bridge') === '1' || q.get('bridge') === '' ? '127.0.0.1:5000' : q.get('bridge').replace(/^https?:\/\//, '').replace(/\/.*$/, '')),
     action: q.get('action') || 'Now Playing'
   };
@@ -185,12 +225,6 @@
   const root = document.documentElement;
   const np = $('np');
   const stage = $('stage');
-  stage.classList.add('t-' + opt.theme);
-  if (opt.align === 'right') stage.classList.add('right');
-  root.style.setProperty('--scale', opt.scale);
-  if (!opt.source) np.classList.add('no-source');
-  if (!opt.time) np.classList.add('no-time');
-  if (!opt.progress) np.classList.add('no-progress');
 
   // ---------- colour: the field takes the cover's main colour ----------
   const hexToRgb = (h) => {
@@ -200,7 +234,7 @@
   };
   const DEFAULT_GROUND = [21, 23, 28];
   const DEFAULT_ACCENT = [255, 90, 90];
-  const fixedGround = opt.color === 'auto' ? null : hexToRgb(opt.color);
+  let fixedGround = null;
 
   const lum = ([r, g, b]) => {
     const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
@@ -308,8 +342,6 @@
       applyPalette(p);
     });
   }
-  colourFor(null);
-
   // ---------- rendering ----------
   let state = null, basePos = 0, baseAt = 0, trackKey = '', hideTimer = null, shownArt = null;
 
@@ -366,12 +398,14 @@
         if (d.art !== shownArt) {
           shownArt = d.art;
           $('cover').style.backgroundImage = `url("${d.art}")`;
+          np.style.setProperty('--art', `url("${d.art}")`);
           np.classList.remove('no-art');
           colourFor(d.art);
         }
       } else if (newTrack) {
         shownArt = null;
         $('cover').style.backgroundImage = '';
+        np.style.setProperty('--art', 'none');
         np.classList.add('no-art');
         colourFor(null);
       }
@@ -402,6 +436,28 @@
     $('fill').style.width = dur > 0 ? `${(pos / dur) * 100}%` : '0%';
   }
   setInterval(tick, 250);
+
+  function configure(look) {
+    Object.assign(opt, look);
+    stage.className = 'stage t-' + opt.theme + (opt.align === 'right' ? ' right' : '');
+    root.style.setProperty('--scale', opt.scale);
+    root.style.setProperty('--spin', (60 / opt.rpm).toFixed(3) + 's');
+    np.classList.toggle('no-source', !opt.source);
+    np.classList.toggle('no-time', !opt.time);
+    np.classList.toggle('no-progress', !opt.progress);
+    fixedGround = opt.color === 'auto' ? null : hexToRgb(opt.color);
+    colourFor(shownArt);
+  }
+  configure({});
+
+  // The editor page (editor.html) sends new settings, and in preview mode its sample songs.
+  window.addEventListener('message', (e) => {
+    if (window.parent === window || e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
+    if (e.data.np === 'look') configure(readLook(new URLSearchParams(e.data.params || '')));
+    else if (e.data.np === 'song' && opt.preview) render(Object.assign({ type: 'nowplaying' }, e.data.song));
+  });
+  if (window.parent !== window) window.parent.postMessage({ np: 'ready' }, '*');
+  if (opt.preview) return;
 
   // ---------- demo mode: sample songs with flat drawn covers ----------
   if (opt.demo) {

@@ -17,6 +17,7 @@ Music app ──> Windows media session ──> nowplaying.ps1 ──> "Now Play
 | `nowplaying.ps1` | Watches Windows for the current song and prints a line of JSON when it changes. |
 | `NowPlaying.cs` | The Streamer.bot action. Starts the watcher, handles `!song`, sends updates to the overlay. |
 | `overlay.html` | The OBS Browser Source. |
+| `editor.html` | Open it in your browser to design the overlay with live changes, then copy the link into OBS. |
 
 ## Setup
 
@@ -28,21 +29,26 @@ Music app ──> Windows media session ──> nowplaying.ps1 ──> "Now Play
 
 To position the overlay without playing music, use the URL `overlay.html?demo=1` (untick Local file and paste the full `file:///C:/...` path with `?demo=1` on the end).
 
+## Design it live
+
+Double-click `editor.html` (keep it in the same folder as `overlay.html`). Change the theme, colors, size, side of the screen and what's shown, and the overlay beside the controls updates as you go. Preview it with a sample song, your own cover image, or your real music through Streamer.bot or SMTC Bridge, over a dark, bright or transparent background. When it looks right, click **Copy link for OBS** and paste it into the Browser Source's URL (untick Local file).
+
 ## Overlay options
 
 Add these to the end of the URL, for example `overlay.html?theme=strip&align=right&hide=0`.
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `theme` | `field` | `field` (the cover beside a block of its color), `strip` (one slim line), `bare` (no block, just the cover and text over your scene), `poster` (a big cover with the text underneath) or `glow` (the cover glows in its own colors, from a blurred copy of the cover itself; the one theme that breaks the no-glow design rules, so it's opt-in) |
+| `theme` | `field` | `field` (the cover beside a block of its color), `strip` (one slim line), `bare` (no block, just the cover and text over your scene), `poster` (a big cover with the text underneath), `vinyl` (a turning record with the cover as its center label; it stops when you pause, and starts without the time and progress bar) or `glow` (the cover glows in its own colors, from a blurred copy of the cover itself; the one theme that breaks the no-glow design rules, so it's opt-in) |
 | `color` | `auto` | `auto` gives the overlay each song's main cover color, with light or dark text, whichever reads better. Or set a fixed hex color like `15171c`. |
 | `align` | `left` | `left` or `right` |
 | `scale` | `1` | Size multiplier, e.g. `1.5` |
 | `hide` | `5` | Seconds after you pause before the card hides. `0` keeps it up. |
 | `popup` | `0` | Show for this many seconds on each new song, then hide. `0` shows it the whole time music plays. |
 | `source` | `1` | `0` hides the app name |
-| `time` | `1` | `0` hides the elapsed and total time |
+| `time` | `1` | `0` hides the elapsed and total time. Vinyl hides it unless you set `time=1`. |
 | `progress` | `1` | `0` hides the progress bar |
+| `rpm` | `33` | Vinyl only: how fast the record turns. `45` is faster, `10` is a slow spin. |
 | `port` / `host` | `8080` / `127.0.0.1` | Streamer.bot WebSocket server |
 | `password` | none | Only if you turned on WebSocket authentication |
 | `demo` | `0` | `1` cycles fake songs |
