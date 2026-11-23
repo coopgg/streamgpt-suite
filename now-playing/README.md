@@ -30,12 +30,12 @@ To position the overlay without playing music, use the URL `overlay.html?demo=1`
 
 ## Overlay options
 
-Add these to the end of the URL, for example `overlay.html?theme=compact&align=right&hide=0`.
+Add these to the end of the URL, for example `overlay.html?theme=strip&align=right&hide=0`.
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `theme` | `card` | `card` (art beside the text), `compact` (a slim pill with a spinning cover), `minimal` (no box, just text over your scene) or `spotlight` (big cover with text underneath) |
-| `accent` | `auto` | `auto` picks the color from each song's album art and fades between them. Or set a fixed hex color like `ff5a5a`. |
+| `theme` | `field` | `field` (the cover beside a block of its color), `strip` (one slim line), `bare` (no block, just the cover and text over your scene) or `poster` (a big cover with the text underneath) |
+| `color` | `auto` | `auto` gives the overlay each song's main cover color, with light or dark text, whichever reads better. Or set a fixed hex color like `15171c`. |
 | `align` | `left` | `left` or `right` |
 | `scale` | `1` | Size multiplier, e.g. `1.5` |
 | `hide` | `5` | Seconds after you pause before the card hides. `0` keeps it up. |

@@ -5,161 +5,148 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StreamGPT Now Playing</title>
 <!--
-  StreamGPT Now Playing overlay. Add as an OBS Browser Source (width 800, height 200).
+  StreamGPT Now Playing overlay. Add as an OBS Browser Source (width 800, height 400).
 
-  URL options (all optional), e.g. overlay.html?align=right&accent=7ddc9a
-    host=127.0.0.1    Streamer.bot WebSocket server address
-    port=8080         Streamer.bot WebSocket server port
-    endpoint=/        Streamer.bot WebSocket endpoint
-    password=         only if you turned on WebSocket authentication
+  The idea: the album cover sets the overlay's colour. The card is the cover
+  plus a flat field of the cover's own main colour, with the text in
+  whichever ink (light or dark) reads best on it.
+
+  URL options (all optional), e.g. overlay.html?theme=strip&align=right
+    theme=field       field, strip, bare or poster
+    color=auto        auto = the field takes the album art's colour, or a fixed hex like 15171c
     align=left        left or right
-    theme=card        card, compact, minimal or spotlight
-    accent=auto       auto = match the album art, or a hex color like ff5a5a
     scale=1           size multiplier, e.g. 1.5
-    hide=5            seconds after pausing before the card hides, 0 = never hide
+    hide=5            seconds after pausing before it hides, 0 = never hide
     popup=0           seconds to show after each new song then hide, 0 = always show while playing
     source=1          show the app name (Spotify, Chrome...), 0 to hide
     time=1            show elapsed and total time, 0 to hide
     progress=1        show the progress bar, 0 to hide
-    demo=0            1 = fake songs, for positioning the overlay without Streamer.bot
+    host=127.0.0.1    Streamer.bot WebSocket server address
+    port=8080         Streamer.bot WebSocket server port
+    endpoint=/        Streamer.bot WebSocket endpoint
+    password=         only if you turned on WebSocket authentication
+    demo=0            1 = sample songs, for positioning without Streamer.bot
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root {
+    --ground: #15171c;
+    --ink: #f6f6f8;
+    --ink-2: rgba(246, 246, 248, 0.8);
+    --track: rgba(246, 246, 248, 0.2);
     --accent: #ff5a5a;
     --scale: 1;
-    --card-bg: rgba(14, 14, 18, 0.82);
-    --card-line: rgba(255, 255, 255, 0.1);
-    --text: #f4f4f6;
-    --text-dim: rgba(244, 244, 246, 0.68);
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --display: "Oswald", "Arial Narrow", sans-serif;
+    --text: "Inter", "Segoe UI", system-ui, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: transparent; overflow: hidden; }
-  body { font-family: Inter, "Segoe UI", system-ui, sans-serif; color: var(--text); padding: 16px; }
+  body { font-family: var(--text); padding: 16px; -webkit-font-smoothing: antialiased; }
   .stage { display: flex; }
   .stage.right { justify-content: flex-end; }
 
-  .card {
-    position: relative; display: flex; align-items: center; gap: 14px;
-    width: 420px; padding: 12px 16px 12px 12px; border-radius: 14px; overflow: hidden;
-    background: var(--card-bg); border: 1px solid var(--card-line);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-    transform-origin: left center; zoom: var(--scale);
-    opacity: 0; transform: translateY(12px);
-    transition: opacity 0.45s ease, transform 0.45s ease;
+  .np {
+    position: relative; display: flex; width: 460px; zoom: var(--scale);
+    background: var(--ground); color: var(--ink);
+    opacity: 0; translate: 0 16px;
+    transition: opacity 0.4s var(--ease), translate 0.4s var(--ease), background-color 0.6s ease, color 0.6s ease;
   }
-  .stage.right .card { transform-origin: right center; }
-  .card.show { opacity: 1; transform: none; }
+  .np.show { opacity: 1; translate: 0 0; }
 
-  .backdrop {
-    position: absolute; inset: -30px; background-size: cover; background-position: center;
-    filter: blur(28px) saturate(1.4); opacity: 0.35; transition: background-image 0.6s;
-    z-index: 0;
+  .cover { width: 108px; aspect-ratio: 1; flex: none; background: center / cover no-repeat; }
+  .np.no-art .cover { display: none; }
+
+  .field {
+    position: relative; flex: 1; min-width: 0;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 14px 20px 18px;
   }
-  .art, .meta { position: relative; z-index: 1; }
-
-  .art {
-    width: 76px; height: 76px; flex-shrink: 0; border-radius: 9px;
-    background: #24242c center / cover no-repeat;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-    display: grid; place-items: center;
-  }
-  .art svg { width: 34px; height: 34px; opacity: 0.5; }
-  .art.has-img svg { display: none; }
-
-  .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-  .label {
-    font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--accent); display: flex; align-items: center; gap: 6px; white-space: nowrap;
-  }
-  .label .src { color: var(--text-dim); font-weight: 600; letter-spacing: 0.06em; }
-  .eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 10px; }
-  .eq i { width: 2px; background: var(--accent); border-radius: 1px; animation: eq 0.9s ease-in-out infinite; }
-  .eq i:nth-child(2) { animation-delay: -0.3s; }
-  .eq i:nth-child(3) { animation-delay: -0.6s; }
-  .paused .eq i { animation-play-state: paused; height: 3px !important; }
-  @keyframes eq { 0%, 100% { height: 3px; } 50% { height: 10px; } }
-
   .line { overflow: hidden; white-space: nowrap; }
   .line span { display: inline-block; }
   .line.scroll span { animation: marquee var(--dur, 10s) ease-in-out infinite; }
   @keyframes marquee { 0%, 18% { transform: translateX(0); } 82%, 100% { transform: translateX(var(--shift)); } }
-  .title { font-size: 17px; font-weight: 700; line-height: 1.3; }
-  .artist { font-size: 14px; font-weight: 500; color: var(--text-dim); line-height: 1.3; }
 
-  .bar-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-  .bar { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
-  .fill { height: 100%; width: 0; background: var(--accent); border-radius: 2px; }
-  .time { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--text-dim); white-space: nowrap; }
-  .no-progress .bar-row { display: none; }
-  .no-time .time { display: none; }
-  .no-source .src { display: none; }
+  .title { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1.08; letter-spacing: -0.01em; }
+  .artist { font-size: 15px; font-weight: 500; line-height: 1.35; color: var(--ink-2); margin-top: 2px; }
+  .info {
+    display: flex; justify-content: space-between; gap: 12px; margin-top: 8px;
+    font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink-2);
+  }
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--track); }
+  .fill { height: 100%; width: 0; background: var(--accent); transition: background-color 0.6s ease, opacity 0.3s ease; }
+  .np.paused .fill { opacity: 0.45; }
 
-  /* Accent colour fades smoothly when it changes with the album art. */
-  @property --accent { syntax: "<color>"; inherits: true; initial-value: #ff5a5a; }
-  :root { transition: --accent 1.2s ease; }
-  .card { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .no-progress .bar { display: none; }
+  .no-progress .field { padding-bottom: 14px; }
+  .no-time .time, .no-source .src { display: none; }
+  .no-time.no-source .info { display: none; }
 
-  /* ---------- theme: compact (a slim pill) ---------- */
-  .t-compact .card { width: 360px; padding: 7px 16px 7px 7px; border-radius: 999px; gap: 11px; }
-  .t-compact .art { width: 42px; height: 42px; border-radius: 50%; }
-  .t-compact .art svg { width: 20px; height: 20px; }
-  .t-compact .art.has-img { animation: spin 14s linear infinite; }
-  .t-compact .paused .art.has-img { animation-play-state: paused; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .t-compact .label { display: none; }
-  .t-compact .title { font-size: 14.5px; }
-  .t-compact .artist { font-size: 12.5px; }
-  .t-compact .meta { position: static; }
-  .t-compact .line { position: relative; z-index: 1; }
-  .t-compact .bar-row { position: absolute; left: 60px; right: 22px; bottom: 5px; margin: 0; z-index: 1; }
-  .t-compact .bar { height: 2px; background: rgba(255, 255, 255, 0.1); }
-  .t-compact .time { display: none; }
+  /* ---------- strip: one slim line ---------- */
+  .t-strip .np { width: 520px; min-height: 50px; }
+  .t-strip .cover { width: 50px; }
+  .t-strip .field { flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 12px; padding: 0 18px 3px; align-self: center; }
+  .t-strip .title { font-size: 21px; flex: 0 1 auto; min-width: 0; }
+  .t-strip .artist { font-size: 14px; flex: 1 1 0; min-width: 40px; margin: 0; }
+  .t-strip .info { display: none; }
+  .t-strip .bar { height: 3px; }
 
-  /* ---------- theme: minimal (no box, just text) ---------- */
-  .t-minimal .card { background: transparent; border: none; box-shadow: none; padding: 4px; width: 440px; }
-  .t-minimal .backdrop { display: none; }
-  .t-minimal .art { width: 64px; height: 64px; }
-  .t-minimal .meta { text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.9); }
-  .t-minimal .artist, .t-minimal .time, .t-minimal .label .src { color: rgba(255, 255, 255, 0.85); }
-  .t-minimal .bar { background: rgba(0, 0, 0, 0.45); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+  /* ---------- bare: no field, text straight on the scene ---------- */
+  .t-bare .np { background: transparent; width: 480px; --ink: #fff; --ink-2: rgba(255, 255, 255, 0.88); --track: rgba(0, 0, 0, 0.5); }
+  .t-bare .cover { width: 84px; }
+  .t-bare .field { padding: 0 0 0 16px; }
+  /* With no field the text sits on live gameplay, so it gets a dark scrim; nothing else here has one. */
+  .t-bare .field > :not(.bar) { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.55); } /* taste-skill-ignore */
+  .t-bare .bar { position: static; margin-top: 10px; }
 
-  /* ---------- theme: spotlight (big cover, text underneath) ---------- */
-  .t-spotlight .card { flex-direction: column; align-items: stretch; width: 260px; padding: 14px; gap: 12px; border-radius: 18px; }
-  .t-spotlight .art { width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; }
-  .t-spotlight .art svg { width: 64px; height: 64px; }
-  .t-spotlight .backdrop { opacity: 0.5; }
-  .t-spotlight .title { font-size: 18px; }
+  /* ---------- poster: big cover, field underneath ---------- */
+  .t-poster .np { flex-direction: column; width: 280px; }
+  .t-poster .cover { width: 100%; }
+  .t-poster .field { padding: 16px 20px 22px; }
+  .t-poster .title { font-size: 32px; }
+
+  /* ---------- new song: the text rises in, the cover fades up ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    .np.swap .cover { animation: fade 0.5s ease both; }
+    .np.swap .title { animation: rise 0.5s var(--ease) both; }
+    .np.swap .artist { animation: rise 0.5s var(--ease) 0.07s both; }
+    .np.swap .info { animation: rise 0.5s var(--ease) 0.14s both; }
+  }
+  @keyframes rise { from { opacity: 0; translate: 0 14px; } }
+  @keyframes fade { from { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .np { translate: none; transition: opacity 0.2s linear; }
+  }
 </style>
 </head>
 <body>
 <div class="stage" id="stage">
-  <div class="card" id="card">
-    <div class="backdrop" id="backdrop"></div>
-    <div class="art" id="art">
-      <svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
-    </div>
-    <div class="meta">
-      <div class="label"><span class="eq"><i></i><i></i><i></i></span>Now playing<span class="src" id="src"></span></div>
-      <div class="line title" id="title"><span></span></div>
-      <div class="line artist" id="artist"><span></span></div>
-      <div class="bar-row"><span class="time" id="pos">0:00</span><div class="bar"><div class="fill" id="fill"></div></div><span class="time" id="dur">0:00</span></div>
+  <div class="np no-art" id="np" role="status" aria-live="polite">
+    <div class="cover" id="cover"></div>
+    <div class="field">
+      <p class="line title" id="title"><span></span></p>
+      <p class="line artist" id="artist"><span></span></p>
+      <p class="info"><span class="time" id="time"></span><span class="src" id="src"></span></p>
+      <div class="bar"><div class="fill" id="fill"></div></div>
     </div>
   </div>
 </div>
 <script>
 (() => {
   const q = new URLSearchParams(location.search);
+  const aliases = { card: 'field', compact: 'strip', minimal: 'bare', spotlight: 'poster' };
+  const themeIn = aliases[q.get('theme')] || q.get('theme');
+  const colorIn = (q.get('color') || q.get('accent') || 'auto').toLowerCase();
   const opt = {
     host: q.get('host') || '127.0.0.1',
     port: q.get('port') || '8080',
     endpoint: q.get('endpoint') || '/',
     password: q.get('password') || '',
+    theme: ['field', 'strip', 'bare', 'poster'].includes(themeIn) ? themeIn : 'field',
+    color: colorIn === 'auto' ? 'auto' : colorIn.replace(/[^0-9a-f]/g, ''),
     align: q.get('align') === 'right' ? 'right' : 'left',
-    theme: ['card', 'compact', 'minimal', 'spotlight'].includes(q.get('theme')) ? q.get('theme') : 'card',
-    accent: (q.get('accent') || 'auto').toLowerCase() === 'auto' ? 'auto' : (q.get('accent') || '').replace(/[^0-9a-f]/gi, ''),
     scale: parseFloat(q.get('scale')) || 1,
     hide: q.has('hide') ? Math.max(0, parseFloat(q.get('hide')) || 0) : 5,
     popup: Math.max(0, parseFloat(q.get('popup')) || 0),
@@ -172,15 +159,111 @@
 
   const $ = (id) => document.getElementById(id);
   const root = document.documentElement;
-  const card = $('card');
-  const fallbackAccent = (opt.accent.length === 3 || opt.accent.length === 6) ? '#' + opt.accent : '#ff5a5a';
-  root.style.setProperty('--accent', fallbackAccent);
-  $('stage').classList.add('t-' + opt.theme);
+  const np = $('np');
+  const stage = $('stage');
+  stage.classList.add('t-' + opt.theme);
+  if (opt.align === 'right') stage.classList.add('right');
   root.style.setProperty('--scale', opt.scale);
-  if (opt.align === 'right') $('stage').classList.add('right');
-  if (!opt.source) card.classList.add('no-source');
-  if (!opt.time) card.classList.add('no-time');
-  if (!opt.progress) card.classList.add('no-progress');
+  if (!opt.source) np.classList.add('no-source');
+  if (!opt.time) np.classList.add('no-time');
+  if (!opt.progress) np.classList.add('no-progress');
+
+  // ---------- colour: the field takes the cover's main colour ----------
+  const hexToRgb = (h) => {
+    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+    if (h.length !== 6) return null;
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  };
+  const DEFAULT_GROUND = [21, 23, 28];
+  const DEFAULT_ACCENT = [255, 90, 90];
+  const fixedGround = opt.color === 'auto' ? null : hexToRgb(opt.color);
+
+  const lum = ([r, g, b]) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  const sat = ([r, g, b]) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b); return mx === 0 ? 0 : (mx - mn) / mx; };
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  const css = (c, a) => a === undefined ? `rgb(${c.join(' ')})` : `rgb(${c.join(' ')} / ${a})`;
+
+  // Pick ink (light or dark) for a ground, nudging the ground until the text reads clearly.
+  function palette(ground, accent) {
+    const WHITE = [246, 246, 248], BLACK = [17, 17, 20];
+    const light = contrast(WHITE, ground) >= contrast(BLACK, ground);
+    const ink = light ? WHITE : BLACK;
+    let g = ground;
+    for (let i = 0; i < 24 && contrast(ink, g) < 6; i++) g = mix(g, light ? [0, 0, 0] : [255, 255, 255], 0.07);
+    let a = accent;
+    if (a) for (let i = 0; i < 8 && contrast(a, g) < 2.4; i++) a = mix(a, light ? [255, 255, 255] : [0, 0, 0], 0.15);
+    if (!a || contrast(a, g) < 2.4) a = ink;
+    return { ground: g, ink, accent: a };
+  }
+
+  function applyPalette(p) {
+    root.style.setProperty('--ground', css(p.ground));
+    if (opt.theme !== 'bare') {
+      root.style.setProperty('--ink', css(p.ink));
+      root.style.setProperty('--ink-2', css(p.ink, 0.8));
+      root.style.setProperty('--track', css(p.ink, 0.2));
+    }
+    root.style.setProperty('--accent', css(opt.theme === 'bare' && p.vivid ? p.vivid : p.accent));
+  }
+
+  const coverCache = new Map();
+  function readCover(src) {
+    return new Promise((resolve) => {
+      if (coverCache.has(src)) return resolve(coverCache.get(src));
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const n = 48, c = document.createElement('canvas');
+          c.width = c.height = n;
+          const ctx = c.getContext('2d', { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0, n, n);
+          const px = ctx.getImageData(0, 0, n, n).data;
+          const buckets = new Map();
+          let total = 0;
+          for (let i = 0; i < px.length; i += 4) {
+            if (px[i + 3] < 128) continue;
+            const key = (px[i] >> 5) * 64 + (px[i + 1] >> 5) * 8 + (px[i + 2] >> 5);
+            const b = buckets.get(key) || { n: 0, r: 0, g: 0, b: 0 };
+            b.n++; b.r += px[i]; b.g += px[i + 1]; b.b += px[i + 2];
+            buckets.set(key, b);
+            total++;
+          }
+          const list = [...buckets.values()].map((b) => ({ n: b.n, c: [b.r / b.n, b.g / b.n, b.b / b.n].map(Math.round) }));
+          list.sort((x, y) => y.n - x.n);
+          const ground = list[0] ? list[0].c : null;
+          let vivid = null, best = 0;
+          for (const b of list) {
+            if (b.n < total * 0.01) continue;
+            const s = sat(b.c), score = b.n * s * s;
+            if (s > 0.35 && Math.max(...b.c) > 70 && (!ground || dist(b.c, ground) > 90) && score > best) { best = score; vivid = b.c; }
+          }
+          const out = ground ? { ground, vivid } : null;
+          coverCache.set(src, out);
+          resolve(out);
+        } catch (e) { resolve(null); }
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+
+  function colourFor(art) {
+    if (fixedGround) return applyPalette(palette(fixedGround, DEFAULT_ACCENT));
+    if (!art) return applyPalette(palette(DEFAULT_GROUND, DEFAULT_ACCENT));
+    readCover(art).then((r) => {
+      if (!state || state.art !== art) return;
+      if (!r) return applyPalette(palette(DEFAULT_GROUND, DEFAULT_ACCENT));
+      const p = palette(r.ground, r.vivid);
+      p.vivid = r.vivid || DEFAULT_ACCENT;
+      applyPalette(p);
+    });
+  }
+  colourFor(null);
 
   // ---------- rendering ----------
   let state = null, basePos = 0, baseAt = 0, trackKey = '', hideTimer = null;
@@ -206,65 +289,15 @@
     });
   }
 
-  // Pick the most vivid common colour in the cover, then brighten it so it reads on a dark card.
-  const accentCache = new Map();
-  function accentFromArt(src) {
-    return new Promise((resolve) => {
-      if (accentCache.has(src)) return resolve(accentCache.get(src));
-      const img = new Image();
-      img.onload = () => {
-        try {
-          const n = 40, c = document.createElement('canvas');
-          c.width = c.height = n;
-          const ctx = c.getContext('2d', { willReadFrequently: true });
-          ctx.drawImage(img, 0, 0, n, n);
-          const px = ctx.getImageData(0, 0, n, n).data;
-          const buckets = new Map();
-          for (let i = 0; i < px.length; i += 4) {
-            if (px[i + 3] < 128) continue;
-            const [h, sat, l] = rgbToHsl(px[i], px[i + 1], px[i + 2]);
-            if (sat < 0.25 || l < 0.12 || l > 0.92) continue;
-            const key = Math.round(h * 24) % 24;
-            const b = buckets.get(key) || { n: 0, h: 0, s: 0, l: 0 };
-            const w = sat * sat;
-            b.n += w; b.h += h * w; b.s += sat * w; b.l += l * w;
-            buckets.set(key, b);
-          }
-          let best = null;
-          for (const b of buckets.values()) if (!best || b.n > best.n) best = b;
-          let color = null;
-          if (best && best.n > 4) {
-            const h = best.h / best.n, sat = Math.min(1, best.s / best.n + 0.1);
-            const l = Math.min(0.76, Math.max(0.66, best.l / best.n));
-            color = `hsl(${Math.round(h * 360)} ${Math.round(sat * 100)}% ${Math.round(l * 100)}%)`;
-          }
-          accentCache.set(src, color);
-          resolve(color);
-        } catch (e) { resolve(null); }
-      };
-      img.onerror = () => resolve(null);
-      img.src = src;
-    });
-  }
-  function rgbToHsl(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
-    if (max === min) return [0, 0, l];
-    const d = max - min, sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-    return [h / 6, sat, l];
-  }
-  function applyAccent(art) {
-    if (opt.accent !== 'auto') return;
-    if (!art) { root.style.setProperty('--accent', fallbackAccent); return; }
-    accentFromArt(art).then((c) => { if (state && state.art === art) root.style.setProperty('--accent', c || fallbackAccent); });
-  }
-
-  function show(on) { card.classList.toggle('show', on); }
-
+  function show(on) { np.classList.toggle('show', on); }
   function scheduleHide(seconds) {
     clearTimeout(hideTimer);
     hideTimer = seconds > 0 ? setTimeout(() => show(false), seconds * 1000) : null;
+  }
+  function replaySwap() {
+    np.classList.remove('swap');
+    void np.offsetWidth;
+    np.classList.add('swap');
   }
 
   function render(d) {
@@ -279,34 +312,31 @@
     trackKey = key;
 
     if (hasSong) {
+      if (newTrack && np.classList.contains('show')) replaySwap();
       setLine($('title'), d.title);
       setLine($('artist'), d.artist || d.album || '');
-      $('src').textContent = d.source ? `· ${d.source}` : '';
-      const art = $('art');
+      $('src').textContent = d.source || '';
       if (d.art) {
-        const url = `url("${d.art}")`;
-        art.style.backgroundImage = url;
-        $('backdrop').style.backgroundImage = url;
-        art.classList.add('has-img');
-        applyAccent(d.art);
+        $('cover').style.backgroundImage = `url("${d.art}")`;
+        np.classList.remove('no-art');
+        colourFor(d.art);
       } else if (newTrack) {
-        applyAccent(null);
-        art.style.backgroundImage = '';
-        $('backdrop').style.backgroundImage = '';
-        art.classList.remove('has-img');
+        $('cover').style.backgroundImage = '';
+        np.classList.add('no-art');
+        colourFor(null);
       }
     }
-    card.classList.toggle('paused', !d.playing);
+    np.classList.toggle('paused', !d.playing);
     tick();
 
     if (!hasSong || d.status === 'None' || d.status === 'Closed') { scheduleHide(0); show(false); return; }
 
     if (d.playing) {
       if (opt.popup > 0) {
-        if (newTrack || !card.classList.contains('show') && d.wasPaused) { show(true); scheduleHide(opt.popup); }
+        if (newTrack || (!np.classList.contains('show') && d.wasPaused)) { show(true); scheduleHide(opt.popup); }
       } else { show(true); scheduleHide(0); }
     } else if (opt.hide > 0) {
-      if (card.classList.contains('show')) scheduleHide(opt.hide);
+      if (np.classList.contains('show')) scheduleHide(opt.hide);
     } else if (opt.popup === 0) {
       show(true); scheduleHide(0);
     }
@@ -318,28 +348,30 @@
     if (state.playing) pos += (performance.now() - baseAt) / 1000;
     const dur = state.duration || 0;
     if (dur > 0) pos = Math.min(pos, dur);
-    $('pos').textContent = fmt(pos);
-    $('dur').textContent = dur > 0 ? fmt(dur) : '--:--';
+    $('time').textContent = !state.playing ? 'Paused' : dur > 0 ? `${fmt(pos)} / ${fmt(dur)}` : fmt(pos);
     $('fill').style.width = dur > 0 ? `${(pos / dur) * 100}%` : '0%';
   }
   setInterval(tick, 250);
 
-  // ---------- demo mode ----------
+  // ---------- demo mode: sample songs with flat drawn covers ----------
   if (opt.demo) {
-    const art = (a, b) => 'data:image/svg+xml;base64,' + btoa(
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/><circle cx="50" cy="50" r="22" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="3"/><circle cx="50" cy="50" r="4" fill="#fff" fill-opacity=".7"/></svg>`);
+    const svg = (body) => 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`);
     const songs = [
-      { title: 'Midnight Static', artist: 'Neon Harbor', album: 'Low Light', source: 'Spotify', duration: 214, art: art('#ff5a5a', '#5a2bff') },
-      { title: 'A Much Longer Song Title That Needs To Scroll Across The Card', artist: 'The Overflow Collective featuring Somebody Else', album: '', source: 'Chrome', duration: 3725, art: art('#14b8a6', '#1e3a8a') },
-      { title: 'Paper Planes at Dawn', artist: 'Kite Season', album: 'Updraft', source: 'Apple Music', duration: 187, art: null }
+      { title: 'Harbour Lights', artist: 'The Tidewater Band', album: 'Low Water', source: 'Spotify', duration: 214,
+        art: svg('<rect width="100" height="100" fill="#1d2a44"/><circle cx="64" cy="40" r="22" fill="#f2c230"/><rect y="70" width="100" height="30" fill="#2e4a6e"/>') },
+      { title: 'A Much Longer Song Title That Has To Scroll Across', artist: 'The Overflow Collective featuring Somebody Else', album: '', source: 'Chrome', duration: 3725,
+        art: svg('<rect width="100" height="100" fill="#1f4d3a"/><rect x="14" y="20" width="14" height="60" fill="#e8743b"/><rect x="36" y="34" width="14" height="46" fill="#e8743b"/><rect x="58" y="12" width="14" height="68" fill="#f4e3c8"/>') },
+      { title: 'Red Line Home', artist: 'Kite Season', album: 'Updraft', source: 'Apple Music', duration: 187,
+        art: svg('<rect width="100" height="100" fill="#c8362d"/><circle cx="50" cy="50" r="30" fill="#111"/><circle cx="50" cy="50" r="5" fill="#c8362d"/>') },
+      { title: 'No Cover Art', artist: 'A song from an app that shares none', album: '', source: 'foobar2000', duration: 241, art: null }
     ];
-    let i = 0;
+    let i = q.has('song') ? parseInt(q.get('song'), 10) || 0 : 0;
     const next = () => {
       const s = songs[i++ % songs.length];
-      render({ type: 'nowplaying', playing: true, status: 'Playing', appId: s.source, position: 20, ...s });
+      render({ type: 'nowplaying', playing: true, status: 'Playing', appId: s.source, position: 48, ...s });
     };
     next();
-    setInterval(next, 9000);
+    if (!q.has('song')) setInterval(next, 9000);
     return;
   }
 
