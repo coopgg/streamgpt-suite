@@ -16,11 +16,17 @@
 // What running the action does:
 //   no arguments              restart the watcher
 //   from a command (!song)    post the current song in chat
-//   npMode = "resend"         rebroadcast the current song (the overlay does this on connect)
+//   npMode = "resend"         rebroadcast the look and current song (the overlay does this on connect)
+//   npMode = "look"           save the look in npLook and push it to every overlay (editor.html does this)
+//   npMode = "replay"         make every overlay hide and show again, to watch its animations
 //   npMode = "stop"           stop the watcher
 //
+// The look is kept in the persisted global np_look, so OBS gets it back after a restart.
+// During Spotify ads the song globals keep the last song, np_ad is true, the Song Changed trigger
+// does not fire, and !song says an ad is on.
+//
 // It also sets these globals (not persisted): np_title, np_artist, np_album,
-// np_source, np_playing. And it fires the custom trigger
+// np_source, np_playing, np_ad. And it fires the custom trigger
 // "Now Playing: Song Changed" (Custom > StreamGPT) with the same values as
 // arguments (%npTitle%, %npArtist%, %npAlbum%, %npSource%).
 
@@ -45,10 +51,13 @@ public class CPHInline
     // Chat reply for !song. {title} {artist} {album} {source} are filled in.
     private const string SongMessage = "Now playing: {title} by {artist} ({source})";
     private const string NothingMessage = "Nothing is playing right now.";
+    private const string AdMessage = "An ad is playing. The music will be right back.";
     // ------------------------------
 
     private const string TriggerEvent = "nowPlayingSongChanged";
     private const string PidGlobal = "np_watcherPid";
+    private const string LookGlobal = "np_look";
+    private string lookParams;
 
     private readonly object gate = new object();
     private Process watcher;
@@ -68,6 +77,7 @@ public class CPHInline
             CPH.RegisterCustomTrigger("Now Playing: Song Changed", TriggerEvent, new[] { "StreamGPT" });
         }
         catch (Exception ex) { SafeLog("Could not register trigger: " + ex.Message); }
+        try { lookParams = CPH.GetGlobalVar<string>(LookGlobal, true); } catch { }
         StartWatcher();
     }
 
@@ -86,8 +96,20 @@ public class CPHInline
         switch (mode)
         {
             case "resend":
+                BroadcastLook();
                 Broadcast();
                 BroadcastArt();
+                return true;
+            case "look":
+                object lookRaw;
+                string look = args.TryGetValue("npLook", out lookRaw) && lookRaw != null ? lookRaw.ToString() : "";
+                if (look.Length > 4000) return false;
+                lookParams = look;
+                CPH.SetGlobalVar(LookGlobal, look, true);
+                BroadcastLook();
+                return true;
+            case "replay":
+                SendToOverlays(new JObject { ["type"] = "nowplaying-replay" });
                 return true;
             case "song":
                 SendSongToChat();
@@ -211,6 +233,7 @@ public class CPHInline
         string album = (string)o["album"] ?? "";
         string source = (string)o["source"] ?? "";
         bool playing = o["playing"] != null && (bool)o["playing"];
+        bool isAd = o["ad"] != null && o["ad"].Type == JTokenType.Boolean && (bool)o["ad"];
 
         // The cover travels separately, in small parts (see BroadcastArt): a whole cover in one
         // message is too big for Streamer.bot's WebSocket and the message never arrives.
@@ -230,14 +253,25 @@ public class CPHInline
             crashCount = 0;
         }
 
-        CPH.SetGlobalVar("np_title", title, false);
-        CPH.SetGlobalVar("np_artist", artist, false);
-        CPH.SetGlobalVar("np_album", album, false);
-        CPH.SetGlobalVar("np_source", source, false);
-        CPH.SetGlobalVar("np_playing", playing, false);
+        CPH.SetGlobalVar("np_ad", isAd, false);
+        if (!isAd)
+        {
+            CPH.SetGlobalVar("np_title", title, false);
+            CPH.SetGlobalVar("np_artist", artist, false);
+            CPH.SetGlobalVar("np_album", album, false);
+            CPH.SetGlobalVar("np_source", source, false);
+            CPH.SetGlobalVar("np_playing", playing, false);
+        }
 
         Broadcast();
         if (artChanged) BroadcastArt();
+
+        // Spotify ads: logged once, and no Song Changed trigger.
+        if (isAd)
+        {
+            if (lastTrackKey != "\u0001ad") { lastTrackKey = "\u0001ad"; SafeLog("Spotify ad playing"); }
+            return;
+        }
 
         // Log each new song and whether its cover came through, so a missing cover is easy to spot.
         string key = title + "|" + artist;
@@ -270,6 +304,20 @@ public class CPHInline
         lock (gate) { json = latestJson; }
         if (json == null) return;
         try { CPH.WebsocketBroadcastJson(json); }
+        catch (Exception ex) { SafeLog("Broadcast failed: " + ex.Message); }
+    }
+
+    // The look saved by the editor, as overlay link options (theme=vinyl&in=pop...).
+    private void BroadcastLook()
+    {
+        string look = lookParams;
+        if (look == null) return;
+        SendToOverlays(new JObject { ["type"] = "nowplaying-look", ["params"] = look });
+    }
+
+    private void SendToOverlays(JObject msg)
+    {
+        try { CPH.WebsocketBroadcastJson(msg.ToString(Newtonsoft.Json.Formatting.None)); }
         catch (Exception ex) { SafeLog("Broadcast failed: " + ex.Message); }
     }
 
@@ -306,6 +354,11 @@ public class CPHInline
         string title = o == null ? "" : ((string)o["title"] ?? "");
         bool playing = o != null && o["playing"] != null && (bool)o["playing"];
 
+        if (o != null && o["ad"] != null && o["ad"].Type == JTokenType.Boolean && (bool)o["ad"])
+        {
+            CPH.SendMessage(AdMessage, true);
+            return;
+        }
         if (!playing || title == "")
         {
             CPH.SendMessage(NothingMessage, true);

@@ -7,8 +7,9 @@
 <title>Now Playing Editor</title>
 <!--
   Open this file in your browser (double-click it). Change anything on the left and the
-  overlay on the right updates as you go. When it looks right, copy the link at the top
-  into an OBS Browser Source. Keep this file next to overlay.html.
+  overlay on the right updates as you go. With Streamer.bot running, OBS updates too: the look
+  is saved in Streamer.bot and pushed to the overlay, so the OBS link never has to change.
+  Keep this file next to overlay.html.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +24,7 @@
     --text-2: #a9afba;
     --accent: #ff5a5a;
     --on-accent: #1a0505;
+    --ok: #7ddc9a;
     --display: "Oswald", "Arial Narrow", sans-serif;
     --sans: "Inter", "Segoe UI", system-ui, sans-serif;
   }
@@ -42,6 +44,9 @@
   .group > h2 + .row { margin-top: 0; }
   .label { display: block; font-weight: 500; margin-bottom: 7px; }
   .hint { display: block; color: var(--text-2); font-size: 14px; margin-top: 7px; }
+  .status { display: block; font-weight: 500; margin-top: 10px; color: var(--text-2); }
+  .status.ok { color: var(--ok); }
+  .status.bad { color: var(--accent); }
 
   .seg { display: flex; flex-wrap: wrap; gap: 4px; }
   .seg button {
@@ -59,7 +64,7 @@
   input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .check { display: flex; align-items: center; gap: 10px; min-height: 36px; cursor: pointer; }
-  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
   .range { display: flex; align-items: center; gap: 12px; }
   .range input { flex: 1; accent-color: var(--accent); }
   .range output { min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums; }
@@ -68,34 +73,37 @@
   .file { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; background: var(--raised); cursor: pointer; font-weight: 500; }
   .file:hover { background: var(--raised-2); }
   .file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .btn { min-height: 40px; padding: 8px 18px; border: 0; background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .btn.quiet { background: var(--raised); color: var(--text); }
+  .btn.quiet:hover { background: var(--raised-2); }
+  .btn:active { scale: 0.97; }
   [hidden] { display: none !important; }
 
   .stagecol { display: flex; flex-direction: column; min-width: 0; }
-  .linkbar { display: flex; gap: 10px; align-items: center; padding: 20px 28px; background: var(--bg); }
+  .linkbar { display: flex; gap: 10px; align-items: center; padding: 20px 28px 0; background: var(--bg); }
   .linkbar input { flex: 1; min-width: 0; font-size: 14px; }
-  .btn { min-height: 40px; padding: 8px 18px; border: 0; background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer; white-space: nowrap; }
-  .btn:active { scale: 0.97; }
-  .scene-row { display: flex; align-items: center; gap: 14px; padding: 0 28px 16px; color: var(--text-2); font-size: 14px; flex-wrap: wrap; }
+  .linknote { padding: 8px 28px 0; color: var(--text-2); font-size: 14px; }
+  .scene-row { display: flex; align-items: center; gap: 14px; padding: 16px 28px; color: var(--text-2); font-size: 14px; flex-wrap: wrap; }
   .scene-row .seg button { min-height: 34px; padding: 4px 12px; font-size: 14px; }
   .preview { flex: 1; position: relative; overflow: hidden; margin: 0 28px 28px; }
-  .preview.dark { background: #1a1d24; }
-  .preview.bright { background: #d8cfbb; }
-  .preview.check {
+  .canvas { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; transform-origin: top left; }
+  .canvas.dark { background: #1a1d24; }
+  .canvas.bright { background: #d8cfbb; }
+  .canvas.check {
     background-color: #2a2d33;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect width='12' height='12' fill='%23353840'/%3E%3Crect x='12' y='12' width='12' height='12' fill='%23353840'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='24' height='24' fill='%23353840'/%3E%3Crect x='24' y='24' width='24' height='24' fill='%23353840'/%3E%3C/svg%3E");
   }
-  .frame-box { position: absolute; top: 0; left: 0; width: 800px; height: 400px; transform-origin: top left; }
   /* The overlay page declares no colour scheme (so light); the frame must match or Chrome paints it white. */
-  .frame-box iframe { width: 800px; height: 400px; border: 0; background: transparent; color-scheme: light; }
-  .size-note { position: absolute; left: 0; bottom: 0; padding: 8px 12px; font-size: 13px; color: var(--text-2); background: rgba(13, 14, 17, 0.75); }
+  .canvas iframe { width: 1920px; height: 1080px; border: 0; background: transparent; color-scheme: light; }
+  .size-note { position: absolute; left: 0; bottom: 0; padding: 8px 12px; font-size: 13px; color: var(--text-2); background: rgba(13, 14, 17, 0.8); }
   .toast { color: var(--accent); font-size: 14px; min-width: 4em; }
 
   @media (max-width: 860px) {
     .app { grid-template-columns: 1fr; height: auto; }
     .stagecol { order: -1; }
-    .preview { min-height: 240px; margin: 0 16px 16px; }
-    .linkbar { padding: 16px; flex-wrap: wrap; }
-    .scene-row { padding: 0 16px 12px; }
+    .preview { min-height: 220px; margin: 0 16px 16px; }
+    .linkbar { padding: 16px 16px 0; flex-wrap: wrap; }
+    .linknote, .scene-row { padding-left: 16px; padding-right: 16px; }
   }
 </style>
 </head>
@@ -103,7 +111,29 @@
 <div class="app">
   <aside class="controls">
     <h1 class="brand">Now Playing editor</h1>
-    <p>Change anything here and the overlay updates as you go. Copy the link at the top into OBS when you're happy with it.</p>
+    <p>Change anything here and the overlay updates as you go. With Streamer.bot connected, OBS updates too, so the link in OBS never has to change.</p>
+
+    <section class="group">
+      <h2>Streamer.bot</h2>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="sync" checked> Update OBS live as I change things</label>
+        <span class="status" id="sbStatus" role="status">Connecting…</span>
+      </div>
+      <div class="row pair">
+        <div><label class="label" for="host">Address</label><input type="text" id="host" value="127.0.0.1"></div>
+        <div><label class="label" for="port">Port</label><input type="number" id="port" value="8080"></div>
+      </div>
+      <div class="row">
+        <label class="label" for="action">Action name</label>
+        <input type="text" id="action" value="[Spotify] Now Playing">
+        <span class="hint">Exactly as it's named in Streamer.bot.</span>
+      </div>
+      <div class="row">
+        <label class="label" for="password">WebSocket password</label>
+        <input type="password" id="password" autocomplete="off">
+        <span class="hint">Only if you turned on authentication in Streamer.bot.</span>
+      </div>
+    </section>
 
     <section class="group">
       <h2>Preview with</h2>
@@ -127,6 +157,7 @@
         </div>
         <div class="row">
           <label class="check"><input type="checkbox" id="sPlaying" checked> Playing (untick to see the paused look)</label>
+          <label class="check"><input type="checkbox" id="sAd"> Pretend a Spotify ad is playing</label>
         </div>
       </div>
 
@@ -138,29 +169,12 @@
             <button type="button" data-value="bridge">SMTC Bridge</button>
           </div>
         </div>
-        <div id="sbBox">
-          <div class="row pair">
-            <div><label class="label" for="host">Address</label><input type="text" id="host" value="127.0.0.1"></div>
-            <div><label class="label" for="port">Port</label><input type="number" id="port" value="8080"></div>
-          </div>
-          <div class="row">
-            <label class="label" for="action">Action name</label>
-            <input type="text" id="action" value="[Spotify] Now Playing">
-            <span class="hint">Exactly as it's named in Streamer.bot.</span>
-          </div>
-          <div class="row">
-            <label class="label" for="password">WebSocket password</label>
-            <input type="password" id="password" autocomplete="off">
-            <span class="hint">Only if you turned on authentication in Streamer.bot.</span>
-          </div>
+        <div class="row" id="bridgeBox" hidden>
+          <label class="label" for="bridge">SMTC Bridge address</label>
+          <input type="text" id="bridge" value="127.0.0.1:5000">
+          <span class="hint">With SMTC Bridge the look is in the link, so copy it into OBS again after changes.</span>
         </div>
-        <div id="bridgeBox" hidden>
-          <div class="row">
-            <label class="label" for="bridge">SMTC Bridge address</label>
-            <input type="text" id="bridge" value="127.0.0.1:5000">
-          </div>
-        </div>
-        <span class="hint">Play something. If nothing shows, check that Streamer.bot's WebSocket server is running (or SMTC Bridge is open).</span>
+        <span class="hint">Play something on Spotify. If nothing shows, check that Streamer.bot's WebSocket server is running.</span>
       </div>
     </section>
 
@@ -204,6 +218,12 @@
         </div>
       </div>
       <div class="row">
+        <span class="label">Size</span>
+        <label class="check"><input type="checkbox" id="fit" checked> Fill the browser source</label>
+        <span class="hint" id="fitHint"></span>
+        <div class="range" style="margin-top:10px"><input type="range" id="scale" min="0.3" max="1" step="0.05" value="1" aria-label="Size"><output id="scaleOut">100%</output></div>
+      </div>
+      <div class="row" id="alignRow">
         <span class="label">Side of the screen</span>
         <div class="seg" data-name="align">
           <button type="button" data-value="left">Left</button>
@@ -211,14 +231,55 @@
         </div>
       </div>
       <div class="row">
-        <label class="label" for="scale">Size</label>
-        <div class="range"><input type="range" id="scale" min="0.5" max="2" step="0.05" value="1"><output id="scaleOut">100%</output></div>
-      </div>
-      <div class="row">
         <span class="label">Show</span>
         <label class="check" id="sourceRow"><input type="checkbox" id="source" checked> App name</label>
         <label class="check" id="timeRow"><input type="checkbox" id="time" checked> Time</label>
         <label class="check"><input type="checkbox" id="progress" checked> <span id="progressLabel">Progress bar</span></label>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Animation</h2>
+      <div class="row">
+        <span class="label">Appear</span>
+        <div class="seg" data-name="in">
+          <button type="button" data-value="rise">Rise</button>
+          <button type="button" data-value="fade">Fade</button>
+          <button type="button" data-value="slide">Slide</button>
+          <button type="button" data-value="pop">Pop</button>
+          <button type="button" data-value="none">None</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label">Disappear</span>
+        <div class="seg" data-name="out">
+          <button type="button" data-value="sink">Sink</button>
+          <button type="button" data-value="fade">Fade</button>
+          <button type="button" data-value="slide">Slide</button>
+          <button type="button" data-value="pop">Pop</button>
+          <button type="button" data-value="none">None</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label">New song</span>
+        <div class="seg" data-name="change">
+          <button type="button" data-value="rise">Rise</button>
+          <button type="button" data-value="fade">Fade</button>
+          <button type="button" data-value="slide">Slide</button>
+          <button type="button" data-value="none">None</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="label">Speed</span>
+        <div class="seg" data-name="speed">
+          <button type="button" data-value="slow">Slow</button>
+          <button type="button" data-value="normal">Normal</button>
+          <button type="button" data-value="fast">Fast</button>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn quiet" type="button" id="replay">Play it</button>
+        <span class="hint">Hides and shows the overlay so you can watch, here and in OBS.</span>
       </div>
     </section>
 
@@ -236,6 +297,14 @@
           <span class="hint">Seconds. 0 shows it the whole time.</span>
         </div>
       </div>
+      <div class="row">
+        <span class="label">During Spotify ads</span>
+        <div class="seg" data-name="ads">
+          <button type="button" data-value="hide">Hide</button>
+          <button type="button" data-value="show">Show "Ad break"</button>
+        </div>
+        <span class="hint">Only matters on a free Spotify account.</span>
+      </div>
     </section>
   </aside>
 
@@ -245,6 +314,7 @@
       <button class="btn" type="button" id="copy">Copy link for OBS</button>
       <span class="toast" id="toast" role="status"></span>
     </div>
+    <p class="linknote" id="linkNote"></p>
     <div class="scene-row">
       <span>Background</span>
       <div class="seg" data-name="scene">
@@ -253,9 +323,9 @@
         <button type="button" data-value="check">Transparent</button>
       </div>
     </div>
-    <div class="preview dark" id="preview">
-      <div class="frame-box" id="frameBox"><iframe id="frame" title="Overlay preview"></iframe></div>
-      <span class="size-note">OBS Browser Source: 800 × 400</span>
+    <div class="preview" id="preview">
+      <div class="canvas dark" id="canvas"><iframe id="frame" title="Overlay preview"></iframe></div>
+      <span class="size-note">OBS Browser Source: 1920 × 1080</span>
     </div>
   </main>
 </div>
@@ -267,13 +337,13 @@
   const SAMPLES = [
     { title: 'Harbour Lights', artist: 'The Tidewater Band', source: 'Spotify', duration: 214,
       art: svg('<rect width="100" height="100" fill="#1d2a44"/><circle cx="64" cy="40" r="22" fill="#f2c230"/><rect y="70" width="100" height="30" fill="#2e4a6e"/>') },
-    { title: 'A Much Longer Song Title That Has To Scroll Across', artist: 'The Overflow Collective featuring Somebody Else', source: 'Chrome', duration: 3725,
+    { title: 'A Much Longer Song Title That Has To Scroll Across', artist: 'The Overflow Collective featuring Somebody Else', source: 'Spotify', duration: 3725,
       art: svg('<rect width="100" height="100" fill="#1f4d3a"/><rect x="14" y="20" width="14" height="60" fill="#e8743b"/><rect x="36" y="34" width="14" height="46" fill="#e8743b"/><rect x="58" y="12" width="14" height="68" fill="#f4e3c8"/>') },
-    { title: 'Red Line Home', artist: 'Kite Season', source: 'Apple Music', duration: 187,
+    { title: 'Red Line Home', artist: 'Kite Season', source: 'Spotify', duration: 187,
       art: svg('<rect width="100" height="100" fill="#c8362d"/><circle cx="50" cy="50" r="30" fill="#111"/><circle cx="50" cy="50" r="5" fill="#c8362d"/>') },
-    { title: 'Daylight Hours', artist: 'Paper Coast', source: 'TIDAL', duration: 233,
+    { title: 'Daylight Hours', artist: 'Paper Coast', source: 'Spotify', duration: 233,
       art: svg('<rect width="100" height="100" fill="#efe6d2"/><rect x="18" y="18" width="64" height="64" fill="#2f6f8f"/><rect x="18" y="58" width="64" height="24" fill="#e2b13c"/>') },
-    { title: 'No Cover Art', artist: 'A song from an app that shares none', source: 'foobar2000', duration: 241, art: null }
+    { title: 'No Cover Art', artist: 'A song with no cover', source: 'Spotify', duration: 241, art: null }
   ];
   const HINTS = {
     field: 'The cover beside a block of its own colour.',
@@ -283,29 +353,36 @@
     glow: 'The cover glows in its own colours.',
     vinyl: 'Just the record, with the cover as its centre label. It stops when you pause.'
   };
+  const DEFAULT_ACTION = '[Spotify] Now Playing';
 
   // ---------- state ----------
-  const defaults = {
-    mode: 'sample', via: 'sb', theme: 'field', rpm: '33.33', colorMode: 'auto', color: '#15171c', align: 'left', corners: 'round',
-    scale: 1, source: true, time: true, progress: true, hide: 5, popup: 0, scene: 'dark',
-    host: '127.0.0.1', port: '8080', password: '', bridge: '127.0.0.1:5000', action: '[Spotify] Now Playing', sample: 0
+  const lookDefaults = {
+    theme: 'field', rpm: '33.33', colorMode: 'auto', color: '#15171c', align: 'left', corners: 'round',
+    fit: true, scale: 1, source: true, time: true, progress: true, hide: 5, popup: 0,
+    in: 'rise', out: 'sink', change: 'rise', speed: 'normal', ads: 'hide'
   };
+  const defaults = Object.assign({
+    mode: 'sample', via: 'sb', scene: 'dark', sync: true,
+    host: '127.0.0.1', port: '8080', password: '', bridge: '127.0.0.1:5000', action: DEFAULT_ACTION, sample: 0
+  }, lookDefaults);
   let st = Object.assign({}, defaults);
   try { Object.assign(st, JSON.parse(localStorage.getItem('np-editor') || '{}')); } catch (e) {}
   delete st.password; // never kept in the browser
+  st.password = '';
   const save = () => { try { const { password, ...keep } = st; localStorage.setItem('np-editor', JSON.stringify(keep)); } catch (e) {} };
 
   let song = null;       // the sample being shown
   let ownCover = null;   // an uploaded image, kept for this visit only
   let started = performance.now();
 
-  // ---------- the link for OBS and the settings for the preview ----------
+  // ---------- the look as overlay link options, and back ----------
   function lookParams() {
     const p = new URLSearchParams();
     const vinyl = st.theme === 'vinyl';
     if (st.theme !== 'field') p.set('theme', st.theme);
     if (st.colorMode === 'fixed') p.set('color', st.color.replace('#', ''));
-    if (st.align === 'right') p.set('align', 'right');
+    if (!st.fit) p.set('fit', '0');
+    if (!st.fit && st.align === 'right') p.set('align', 'right');
     if (st.corners === 'square') p.set('corners', 'square');
     if (Number(st.scale) !== 1) p.set('scale', String(st.scale));
     if (Number(st.hide) !== 5) p.set('hide', String(st.hide));
@@ -314,7 +391,40 @@
     if (st.time !== !vinyl) p.set('time', st.time ? '1' : '0');
     if (st.progress !== !vinyl) p.set('progress', st.progress ? '1' : '0');
     if (vinyl && st.rpm !== '33.33') p.set('rpm', st.rpm);
+    if (st.in !== 'rise') p.set('in', st.in);
+    if (st.out !== 'sink') p.set('out', st.out);
+    if (st.change !== 'rise') p.set('change', st.change);
+    if (st.speed !== 'normal') p.set('speed', st.speed);
+    if (st.ads !== 'hide') p.set('ads', st.ads);
     return p;
+  }
+  // The look saved in Streamer.bot, read back into the controls.
+  function takeLook(text) {
+    const p = new URLSearchParams(text || '');
+    const one = (k, list, d) => (list.includes(p.get(k)) ? p.get(k) : d);
+    const theme = one('theme', ['field', 'strip', 'bare', 'poster', 'glow', 'vinyl'], 'field');
+    const vinyl = theme === 'vinyl';
+    const num = (k, d) => (p.has(k) && !isNaN(parseFloat(p.get(k))) ? parseFloat(p.get(k)) : d);
+    Object.assign(st, {
+      theme,
+      colorMode: p.has('color') ? 'fixed' : 'auto',
+      color: p.has('color') ? '#' + p.get('color') : st.color,
+      fit: p.get('fit') !== '0',
+      align: p.get('align') === 'right' ? 'right' : 'left',
+      corners: p.get('corners') === 'square' ? 'square' : 'round',
+      scale: num('scale', 1), hide: num('hide', 5), popup: num('popup', 0),
+      source: p.get('source') !== '0',
+      time: p.has('time') ? p.get('time') !== '0' : !vinyl,
+      progress: p.has('progress') ? p.get('progress') !== '0' : !vinyl,
+      rpm: ['10', '33.33', '45'].includes(p.get('rpm')) ? p.get('rpm') : '33.33',
+      in: one('in', ['rise', 'fade', 'slide', 'pop', 'none'], 'rise'),
+      out: one('out', ['sink', 'fade', 'slide', 'pop', 'none'], 'sink'),
+      change: one('change', ['rise', 'fade', 'slide', 'none'], 'rise'),
+      speed: one('speed', ['slow', 'normal', 'fast'], 'normal'),
+      ads: one('ads', ['hide', 'show'], 'hide')
+    });
+    fillInputs();
+    update(false);
   }
   function connParams() {
     const p = new URLSearchParams();
@@ -322,14 +432,82 @@
     if (st.host && st.host !== '127.0.0.1') p.set('host', st.host);
     if (st.port && String(st.port) !== '8080') p.set('port', st.port);
     if (st.password) p.set('password', st.password);
-    if (st.action && st.action !== '[Spotify] Now Playing') p.set('action', st.action);
+    if (st.action && st.action !== DEFAULT_ACTION) p.set('action', st.action);
     return p;
   }
   const overlayBase = () => location.href.split(/[?#]/)[0].replace(/[^/]*$/, 'overlay.html');
+  // With live updates the link holds only the connection: the look comes from Streamer.bot.
+  const linkFollowsSb = () => st.sync && st.via === 'sb';
   function obsLink() {
-    const p = new URLSearchParams([...connParams(), ...lookParams()]);
+    const p = new URLSearchParams(connParams());
+    if (!linkFollowsSb()) { for (const [k, v] of lookParams()) p.set(k, v); if (st.via === 'sb') p.set('sync', '0'); }
     const qs = p.toString();
     return overlayBase() + (qs ? '?' + qs : '');
+  }
+
+  // ---------- Streamer.bot: save the look there so OBS follows it ----------
+  let ws = null, wsReady = false, wsTimer = null, adoptOpen = true, pushTimer = null;
+  const setStatus = (text, kind) => { const el = $('sbStatus'); el.textContent = text; el.className = 'status' + (kind ? ' ' + kind : ''); };
+  const sbSend = (o) => { try { if (wsReady) ws.send(JSON.stringify(o)); } catch (e) {} };
+  const doAction = (args) => sbSend({ request: 'DoAction', id: 'ed-' + Date.now(), action: { name: st.action || DEFAULT_ACTION }, args });
+  async function sha256b64(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  }
+  function sbConnect() {
+    clearTimeout(wsTimer);
+    if (ws) { ws.onclose = null; try { ws.close(); } catch (e) {} }
+    wsReady = false; adoptOpen = true;
+    if (!st.sync) { setStatus('Live updates are off. The link carries the look; copy it into OBS after changes.'); return; }
+    setStatus('Connecting to Streamer.bot…');
+    let sock;
+    try { sock = new WebSocket(`ws://${st.host || '127.0.0.1'}:${st.port || 8080}/`); } catch (e) { setStatus("Can't reach Streamer.bot. Check the address and port.", 'bad'); return; }
+    ws = sock;
+    let helloTimer = null;
+    const begin = () => {
+      if (wsReady) return;
+      wsReady = true;
+      setStatus('Connected. OBS follows your changes.', 'ok');
+      sbSend({ request: 'Subscribe', id: 'ed-sub', events: { General: ['Custom'] } });
+      doAction({ npMode: 'resend' });
+      // Nothing saved yet? Then this editor's look becomes the saved one.
+      setTimeout(() => { if (adoptOpen) { adoptOpen = false; pushLook(true); } }, 1500);
+    };
+    sock.onopen = () => { helloTimer = setTimeout(begin, 1500); };
+    sock.onmessage = async (ev) => {
+      let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+      if (m.request === 'Hello') {
+        clearTimeout(helloTimer);
+        const a = m.authentication;
+        if (a && a.challenge) {
+          if (!st.password) { setStatus('Streamer.bot wants its WebSocket password (below).', 'bad'); return; }
+          try {
+            const secret = await sha256b64(st.password + a.salt);
+            sbSendRaw(sock, { request: 'Authenticate', id: 'ed-auth', authentication: await sha256b64(secret + a.challenge) });
+          } catch (e) { setStatus('Could not log in to Streamer.bot.', 'bad'); }
+        } else begin();
+        return;
+      }
+      if (m.id === 'ed-auth') { if (m.status === 'ok') begin(); else setStatus('Streamer.bot rejected the password.', 'bad'); return; }
+      const d = m.event && m.event.source === 'General' && m.event.type === 'Custom' ? m.data : null;
+      if (d && d.type === 'nowplaying-look' && adoptOpen && typeof d.params === 'string') {
+        adoptOpen = false;
+        takeLook(d.params);
+        setStatus('Connected. Loaded the look saved in Streamer.bot; OBS follows your changes.', 'ok');
+      }
+    };
+    sock.onclose = () => {
+      if (ws !== sock) return;
+      wsReady = false;
+      setStatus(`Can't reach Streamer.bot at ${st.host}:${st.port}. Is its WebSocket server started? Trying again…`, 'bad');
+      wsTimer = setTimeout(sbConnect, 4000);
+    };
+  }
+  const sbSendRaw = (sock, o) => { try { sock.send(JSON.stringify(o)); } catch (e) {} };
+  function pushLook(now) {
+    if (!st.sync || st.via !== 'sb') return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => doAction({ npMode: 'look', npLook: lookParams().toString() }), now ? 0 : 150);
   }
 
   // ---------- preview ----------
@@ -340,7 +518,7 @@
     if (key === frameKey) return false;
     frameKey = key;
     const p = st.mode === 'sample' ? new URLSearchParams([['preview', '1'], ...lookParams()])
-                                   : new URLSearchParams([...connParams(), ...lookParams()]);
+                                   : new URLSearchParams([...connParams(), ...lookParams(), ['sync', '0']]);
     frame.src = 'overlay.html?' + p.toString();
     return true;
   }
@@ -351,7 +529,7 @@
     const elapsed = (performance.now() - started) / 1000;
     post({ np: 'song', song: {
       title: $('sTitle').value || ' ', artist: $('sArtist').value, album: '', source: $('sApp').value, appId: 'sample-' + st.sample,
-      art: ownCover || song.art, duration: song.duration, playing: $('sPlaying').checked,
+      art: ownCover || song.art, duration: song.duration, playing: $('sPlaying').checked, ad: $('sAd').checked,
       status: $('sPlaying').checked ? 'Playing' : 'Paused', position: 48 + elapsed
     } });
   }
@@ -359,12 +537,12 @@
     if (e.source === frame.contentWindow && e.data && e.data.np === 'ready') { sendLook(); sendSong(); }
   });
 
-  function fit() {
+  function fitPreview() {
     const box = $('preview').getBoundingClientRect();
-    const k = Math.min(1, box.width / 800, Math.max(0.2, box.height / 400));
-    $('frameBox').style.transform = `scale(${k})`;
+    const k = Math.min(box.width / 1920, box.height / 1080);
+    $('canvas').style.transform = `scale(${Math.max(0.05, k)})`;
   }
-  new ResizeObserver(fit).observe($('preview'));
+  new ResizeObserver(fitPreview).observe($('preview'));
 
   // ---------- controls ----------
   function paint() {
@@ -372,27 +550,45 @@
       const v = String(st[seg.dataset.name]);
       seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.value === v)));
     });
+    const vinyl = st.theme === 'vinyl';
     $('sampleBox').hidden = st.mode !== 'sample';
     $('liveBox').hidden = st.mode !== 'live';
-    $('sbBox').hidden = st.via !== 'sb';
     $('bridgeBox').hidden = st.via !== 'bridge';
-    $('rpmRow').hidden = st.theme !== 'vinyl';
+    $('rpmRow').hidden = !vinyl;
     // Vinyl is just the record: no text to show, and the progress is a ring around it.
-    $('sourceRow').hidden = $('timeRow').hidden = $('cornersRow').hidden = st.theme === 'vinyl';
-    $('progressLabel').textContent = st.theme === 'vinyl' ? 'Progress ring around the record' : 'Progress bar';
+    $('sourceRow').hidden = $('timeRow').hidden = $('cornersRow').hidden = vinyl;
+    $('progressLabel').textContent = vinyl ? 'Progress ring around the record' : 'Progress bar';
     $('colorRow').hidden = st.colorMode !== 'fixed';
+    $('alignRow').hidden = st.fit;
     $('themeHint').textContent = HINTS[st.theme];
-    $('preview').className = 'preview ' + st.scene;
+    $('fitHint').textContent = st.fit
+      ? 'Set the Browser Source to 1920 × 1080. The widget fills it, centred: put it in its own scene, then place and resize that scene anywhere.'
+      : 'A fixed size in the top corner of the Browser Source.';
+    const sc = $('scale');
+    sc.min = st.fit ? '0.3' : '0.5'; sc.max = st.fit ? '1' : '2';
     $('scaleOut').textContent = Math.round(st.scale * 100) + '%';
+    $('canvas').className = 'canvas ' + st.scene;
     $('link').value = obsLink();
+    $('linkNote').textContent = linkFollowsSb()
+      ? 'Paste this into OBS once. It never changes: your look is saved in Streamer.bot and sent to OBS live.'
+      : 'This link carries the look. After changing something, copy it into OBS again.';
   }
 
-  function update() {
+  function update(push = true) {
     paint();
     save();
     if (!loadFrame()) sendLook();
+    if (push) { adoptOpen = false; pushLook(); }
   }
 
+  function fillInputs() {
+    $('scale').value = st.scale; $('hide').value = st.hide; $('popup').value = st.popup; $('color').value = st.color;
+    $('host').value = st.host; $('port').value = st.port; $('bridge').value = st.bridge; $('action').value = st.action;
+    $('source').checked = st.source; $('time').checked = st.time; $('progress').checked = st.progress;
+    $('fit').checked = st.fit; $('sync').checked = st.sync;
+  }
+
+  const LOOK_KEYS = new Set(Object.keys(lookDefaults));
   document.querySelectorAll('.seg').forEach((seg) => seg.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
@@ -403,21 +599,33 @@
       st.time = st.progress = st.theme !== 'vinyl';
       $('time').checked = st.time; $('progress').checked = st.progress;
     }
-    update();
+    update(LOOK_KEYS.has(name));
     if (name === 'mode') sendSong();
+    if (name === 'via') sbConnect();
   }));
 
-  const bindValue = (id, key, cast = (v) => v) => $(id).addEventListener('input', () => { st[key] = cast($(id).value); update(); });
-  bindValue('scale', 'scale', Number);
-  bindValue('hide', 'hide', (v) => Math.max(0, Number(v) || 0));
-  bindValue('popup', 'popup', (v) => Math.max(0, Number(v) || 0));
-  bindValue('color', 'color');
-  bindValue('host', 'host');
-  bindValue('port', 'port');
-  bindValue('password', 'password');
-  bindValue('bridge', 'bridge');
-  bindValue('action', 'action');
+  const bindLook = (id, key, cast = (v) => v) => $(id).addEventListener('input', () => { st[key] = cast($(id).value); update(); });
+  bindLook('scale', 'scale', Number);
+  bindLook('hide', 'hide', (v) => Math.max(0, Number(v) || 0));
+  bindLook('popup', 'popup', (v) => Math.max(0, Number(v) || 0));
+  bindLook('color', 'color');
   ['source', 'time', 'progress'].forEach((k) => $(k).addEventListener('change', () => { st[k] = $(k).checked; update(); }));
+  $('fit').addEventListener('change', () => {
+    st.fit = $('fit').checked;
+    st.scale = st.fit ? Math.min(1, Math.max(0.3, st.scale)) : 1;
+    $('scale').value = st.scale;
+    update();
+  });
+
+  // Connection details: reconnect a moment after typing stops.
+  let connTimer = null;
+  ['host', 'port', 'password', 'action', 'bridge'].forEach((k) => $(k).addEventListener('input', () => {
+    st[k] = $(k).value; update(false);
+    clearTimeout(connTimer); connTimer = setTimeout(sbConnect, 600);
+  }));
+  $('sync').addEventListener('change', () => { st.sync = $('sync').checked; update(false); sbConnect(); });
+
+  $('replay').addEventListener('click', () => { post({ np: 'replay' }); if (st.sync && st.via === 'sb') doAction({ npMode: 'replay' }); });
 
   const sel = $('sample');
   SAMPLES.forEach((s, i) => sel.add(new Option(s.title, i)));
@@ -430,6 +638,7 @@
   sel.addEventListener('change', () => pickSample(Number(sel.value)));
   ['sTitle', 'sArtist', 'sApp'].forEach((id) => $(id).addEventListener('input', sendSong));
   $('sPlaying').addEventListener('change', sendSong);
+  $('sAd').addEventListener('change', sendSong);
   $('sCover').addEventListener('change', () => {
     const f = $('sCover').files[0];
     if (!f) return;
@@ -447,13 +656,12 @@
   });
 
   // ---------- start ----------
-  $('scale').value = st.scale; $('hide').value = st.hide; $('popup').value = st.popup; $('color').value = st.color;
-  $('host').value = st.host; $('port').value = st.port; $('bridge').value = st.bridge; $('action').value = st.action;
-  $('source').checked = st.source; $('time').checked = st.time; $('progress').checked = st.progress;
+  fillInputs();
   pickSample(Number(st.sample) || 0);
   paint();
   loadFrame();
-  fit();
+  fitPreview();
+  sbConnect();
 })();
 </script>
 </body>

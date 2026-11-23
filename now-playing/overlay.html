@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StreamGPT Now Playing</title>
 <!--
-  StreamGPT Now Playing overlay. Add as an OBS Browser Source (width 800, height 400).
+  StreamGPT Now Playing overlay. Add as an OBS Browser Source, 1920 x 1080: the widget fills
+  it (fit=1), so you can put it in its own scene and place and resize that scene anywhere.
+
+  With Streamer.bot, the look is saved in Streamer.bot by editor.html and pushed here live, so
+  the link never needs to change. Options in the link still work and are used until then.
 
   The idea: the album cover sets the overlay's colour. The card is the cover
   plus a flat field of the cover's own main colour, with the text in
@@ -15,8 +19,16 @@
     theme=field       field, strip, bare, poster, glow or vinyl
     corners=round     round or square
     color=auto        auto = the field takes the album art's colour, or a fixed hex like 15171c
-    align=left        left or right
-    scale=1           size multiplier, e.g. 1.5
+    fit=1             1 = the widget fills the browser source (as large as fits, centred);
+                      0 = fixed size in the top corner
+    scale=1           fit=1: how much of the source it fills (0.3 to 1); fit=0: size multiplier
+    align=left        fit=0 only: left or right
+    in=rise           how it appears: rise, fade, slide, pop or none
+    out=sink          how it disappears: sink, fade, slide, pop or none
+    change=rise       on a new song: rise, fade, slide or none
+    speed=normal      slow, normal or fast
+    ads=hide          during Spotify ads: hide, or show (an "Ad break" card)
+    sync=1            0 = ignore the look saved in Streamer.bot and use only this link
     hide=5            seconds after pausing before it hides, 0 = never hide
     popup=0           seconds to show after each new song then hide, 0 = always show while playing
     source=1          show the app name (Spotify, Chrome...), 0 to hide
@@ -58,10 +70,27 @@
   .np {
     position: relative; display: flex; width: 460px; zoom: var(--scale);
     background: var(--ground); color: var(--ink);
-    opacity: 0; translate: 0 16px;
-    transition: opacity 0.4s var(--ease), translate 0.4s var(--ease), background-color 0.6s ease, color 0.6s ease;
+    opacity: 0;
+    transition: background-color 0.6s ease, color 0.6s ease;
   }
-  .np.show { opacity: 1; translate: 0 0; }
+
+  /* ---------- fit=1: the widget fills the browser source, centred ---------- */
+  html.fit body { padding: 0; }
+  html.fit .stage { position: fixed; inset: 0; align-items: center; justify-content: center; }
+
+  /* ---------- appearing and disappearing (in=, out=, speed=) ----------
+     The animation names are set on :root by configure(); --dir is 1 when the widget sits on the
+     left (slides come from the left) and -1 on the right. */
+  .np.show { opacity: 1; animation: var(--in-name, np-rise-in) calc(0.5s * var(--spd, 1)) var(--ease) both; }
+  .np.leaving { opacity: 0; animation: var(--out-name, np-sink-out) calc(0.35s * var(--spd, 1)) cubic-bezier(0.5, 0, 0.75, 0) both; }
+  @keyframes np-rise-in { from { opacity: 0; translate: 0 28px; } }
+  @keyframes np-fade-in { from { opacity: 0; } }
+  @keyframes np-slide-in { from { opacity: 0; translate: calc(-72px * var(--dir, 1)) 0; } }
+  @keyframes np-pop-in { from { opacity: 0; scale: 0.82; } }
+  @keyframes np-sink-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 28px; } }
+  @keyframes np-fade-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes np-slide-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: calc(-72px * var(--dir, 1)) 0; } }
+  @keyframes np-pop-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: 0.82; } }
 
   .cover-wrap { flex: none; display: flex; position: relative; }
   .cover { width: 108px; aspect-ratio: 1; flex: none; background: center / cover no-repeat; }
@@ -169,11 +198,15 @@
   .t-vinyl .cover {
     position: relative; width: var(--disc); border-radius: 50%;
     /* The record itself, drawn in code: a shiny rim over the grooves, and a spindle hole you can see through. */
-    background: radial-gradient(circle closest-side, transparent 95.5%, #4a4a52 97%, #1c1c20 100%), repeating-radial-gradient(circle, #1d1d20 0 1px, #0b0b0c 1px 3px) !important; /* taste-skill-ignore */
+    background: radial-gradient(circle closest-side, transparent 95.5%, #4a4a52 97%, #1c1c20 100%), var(--grooves) !important; /* taste-skill-ignore */
     -webkit-mask: radial-gradient(circle closest-side, transparent 0 3.6%, #000 4.2%); /* taste-skill-ignore */
     mask: radial-gradient(circle closest-side, transparent 0 3.6%, #000 4.2%); /* taste-skill-ignore */
     animation: spin var(--spin, 1.8s) linear infinite;
   }
+  /* Grooves: a few pixels apart on a small record; a share of the record when it fills the screen,
+     so they stay fine when scaled up (pixel spacing turns into thick rings) and do not shimmer when small. */
+  .t-vinyl { --grooves: repeating-radial-gradient(circle, #1d1d20 0 1px, #0b0b0c 1px 3px); } /* taste-skill-ignore */
+  html.fit .t-vinyl { --grooves: repeating-radial-gradient(circle closest-side, #1d1d20 0 0.45%, #0b0b0c 0.45% 1.3%); } /* taste-skill-ignore */
   .t-vinyl .cover::before {
     content: ""; position: absolute; inset: 30%; border-radius: 50%;
     background: var(--accent) var(--art, none) center / cover no-repeat;
@@ -191,22 +224,30 @@
   .t-vinyl .np:not(.no-progress) .ring { display: block; }
   @keyframes spin { to { rotate: 360deg; } }
 
-  /* ---------- new song: the text rises in, the cover fades up ---------- */
+  /* ---------- new song (change=): the cover fades up and the text comes in, one line after another ---------- */
   @media (prefers-reduced-motion: no-preference) {
-    .np.swap .cover { animation: fade 0.5s ease both; }
-    .t-vinyl .np.swap .cover { animation: spin var(--spin, 1.8s) linear infinite; }
-    .np.swap .title { animation: rise 0.5s var(--ease) both; }
-    .np.swap .artist { animation: rise 0.5s var(--ease) 0.07s both; }
-    .np.swap .info { animation: rise 0.5s var(--ease) 0.14s both; }
+    .stage:not(.chg-none) .np.swap .cover { animation: fade calc(0.5s * var(--spd, 1)) ease both; }
+    .stage.t-vinyl .np.swap .cover { animation: spin var(--spin, 1.8s) linear infinite; }
+    .t-vinyl:not(.chg-none) .np.swap .cover::before { animation: fade calc(0.5s * var(--spd, 1)) ease both; }
+    .chg-rise .np.swap .title { animation: rise calc(0.5s * var(--spd, 1)) var(--ease) both; }
+    .chg-rise .np.swap .artist { animation: rise calc(0.5s * var(--spd, 1)) var(--ease) calc(0.07s * var(--spd, 1)) both; }
+    .chg-rise .np.swap .info { animation: rise calc(0.5s * var(--spd, 1)) var(--ease) calc(0.14s * var(--spd, 1)) both; }
+    .chg-slide .np.swap .title { animation: slide-x calc(0.5s * var(--spd, 1)) var(--ease) both; }
+    .chg-slide .np.swap .artist { animation: slide-x calc(0.5s * var(--spd, 1)) var(--ease) calc(0.07s * var(--spd, 1)) both; }
+    .chg-slide .np.swap .info { animation: slide-x calc(0.5s * var(--spd, 1)) var(--ease) calc(0.14s * var(--spd, 1)) both; }
+    .chg-fade .np.swap .field > :not(.bar) { animation: fade calc(0.5s * var(--spd, 1)) ease both; }
   }
   @keyframes rise { from { opacity: 0; translate: 0 14px; } }
+  @keyframes slide-x { from { opacity: 0; translate: calc(-24px * var(--dir, 1)) 0; } }
   @keyframes fade { from { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) {
-    .np { translate: none; transition: opacity 0.2s linear; }
+    /* Asked for less motion: everything only fades, nothing travels. */
+    .np.show { animation-name: np-fade-in; }
+    .np.leaving { animation-name: np-fade-out; }
     .t-vinyl .cover { animation: none; }
   }
   /* After the new-song rules, which restart the spin: a paused record stops where it is. */
-  .t-vinyl .np.paused .cover { animation-play-state: paused; }
+  .stage.t-vinyl .np.paused .cover { animation-play-state: paused; }
 </style>
 </head>
 <body>
@@ -226,17 +267,25 @@
   const q = new URLSearchParams(location.search);
   const aliases = { card: 'field', compact: 'strip', minimal: 'bare', spotlight: 'poster' };
   const THEMES = ['field', 'strip', 'bare', 'poster', 'glow', 'vinyl'];
+  const pick = (v, list, dflt) => list.includes(v) ? v : dflt;
   // Display settings. Parsed by a function so the editor page can change them while the overlay runs.
   function readLook(p) {
     const t = aliases[p.get('theme')] || p.get('theme');
     const theme = THEMES.includes(t) ? t : 'field';
     const colorIn = (p.get('color') || p.get('accent') || 'auto').toLowerCase();
     const vinyl = theme === 'vinyl';
+    const fit = p.get('fit') !== '0';
     return {
       theme,
+      fit,
       color: colorIn === 'auto' ? 'auto' : colorIn.replace(/[^0-9a-f]/g, ''),
       align: p.get('align') === 'right' ? 'right' : 'left',
-      scale: Math.min(4, Math.max(0.25, parseFloat(p.get('scale')) || 1)),
+      scale: fit ? Math.min(1, Math.max(0.2, parseFloat(p.get('scale')) || 1)) : Math.min(4, Math.max(0.25, parseFloat(p.get('scale')) || 1)),
+      in: pick(p.get('in'), ['rise', 'fade', 'slide', 'pop', 'none'], 'rise'),
+      out: pick(p.get('out'), ['sink', 'fade', 'slide', 'pop', 'none'], 'sink'),
+      change: pick(p.get('change'), ['rise', 'fade', 'slide', 'none'], 'rise'),
+      speed: pick(p.get('speed'), ['slow', 'normal', 'fast'], 'normal'),
+      ads: pick(p.get('ads'), ['hide', 'show'], 'hide'),
       hide: p.has('hide') ? Math.max(0, parseFloat(p.get('hide')) || 0) : 5,
       popup: Math.max(0, parseFloat(p.get('popup')) || 0),
       source: p.get('source') !== '0',
@@ -254,6 +303,7 @@
     password: q.get('password') || '',
     demo: q.get('demo') === '1',
     preview: q.get('preview') === '1',
+    sync: q.get('sync') !== '0',
     bridge: !q.has('bridge') || q.get('bridge') === '0' ? '' : (q.get('bridge') === '1' || q.get('bridge') === '' ? '127.0.0.1:5000' : q.get('bridge').replace(/^https?:\/\//, '').replace(/\/.*$/, '')),
     action: q.get('action') || '[Spotify] Now Playing',
     only: (q.get('only') || '').toLowerCase().split(',').map((x) => x.trim()).filter(Boolean)
@@ -423,7 +473,12 @@
     });
   }
 
-  function show(on) { np.classList.toggle('show', on); }
+  // Showing plays the in= animation; hiding swaps .show for .leaving, which plays the out= one.
+  function show(on) {
+    const shown = np.classList.contains('show');
+    if (on && !shown) { np.classList.remove('leaving'); np.classList.add('show'); refit(); }
+    else if (!on && shown) { np.classList.remove('show'); np.classList.add('leaving'); }
+  }
   function scheduleHide(seconds) {
     clearTimeout(hideTimer);
     hideTimer = seconds > 0 ? setTimeout(() => show(false), seconds * 1000) : null;
@@ -436,6 +491,15 @@
 
   function render(d) {
     if (!d || d.type !== 'nowplaying') return;
+    // Spotify ads (free accounts): hide, or show a short card in place of the song.
+    if (d.ad) {
+      if (opt.ads === 'hide') {
+        state = d; trackKey = 'ad'; basePos = 0; baseAt = performance.now();
+        scheduleHide(0); show(false);
+        return;
+      }
+      d = Object.assign({}, d, { title: 'Ad break', artist: 'Back to the music in a moment', album: '', art: null, artId: '', appId: 'ad' });
+    }
     const wasPlaying = !!(state && state.playing);
     state = d;
     basePos = d.position || 0;
@@ -470,6 +534,7 @@
     np.classList.toggle('paused', !d.playing);
     tick();
 
+    refit();
     if (!hasSong || d.status === 'None' || d.status === 'Closed') { scheduleHide(0); show(false); return; }
 
     if (d.playing) {
@@ -496,16 +561,47 @@
   }
   setInterval(tick, 250);
 
+  // fit=1: scale the widget to fill the browser source (keeping its shape), centred, with a
+  // margin so glows, rings and shadows are not cut off. Measured at zoom 1 so the result is exact.
+  function refit() {
+    if (!opt.fit) { root.style.setProperty('--scale', opt.scale); return; }
+    root.style.setProperty('--scale', 1);
+    const w = np.offsetWidth, h = np.offsetHeight;
+    if (!w || !h) return;
+    const k = Math.min(innerWidth * 0.9 / w, innerHeight * 0.9 / h) * opt.scale;
+    root.style.setProperty('--scale', Math.max(0.1, k).toFixed(4));
+  }
+  addEventListener('resize', refit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+
+  const IN_NAMES = { rise: 'np-rise-in', fade: 'np-fade-in', slide: 'np-slide-in', pop: 'np-pop-in', none: 'none' };
+  const OUT_NAMES = { sink: 'np-sink-out', fade: 'np-fade-out', slide: 'np-slide-out', pop: 'np-pop-out', none: 'none' };
+  const SPEEDS = { slow: 1.6, normal: 1, fast: 0.6 };
+
   function configure(look) {
     Object.assign(opt, look);
-    stage.className = 'stage t-' + opt.theme + (opt.align === 'right' ? ' right' : '') + (opt.corners === 'square' ? ' square' : '');
-    root.style.setProperty('--scale', opt.scale);
+    stage.className = 'stage t-' + opt.theme + ' chg-' + opt.change + (!opt.fit && opt.align === 'right' ? ' right' : '') + (opt.corners === 'square' ? ' square' : '');
+    root.classList.toggle('fit', opt.fit);
+    root.style.setProperty('--in-name', IN_NAMES[opt.in]);
+    root.style.setProperty('--out-name', OUT_NAMES[opt.out]);
+    root.style.setProperty('--spd', SPEEDS[opt.speed]);
+    root.style.setProperty('--dir', !opt.fit && opt.align === 'right' ? -1 : 1);
     root.style.setProperty('--spin', (60 / opt.rpm).toFixed(3) + 's');
     np.classList.toggle('no-source', !opt.source);
     np.classList.toggle('no-time', !opt.time);
     np.classList.toggle('no-progress', !opt.progress);
     fixedGround = opt.color === 'auto' ? null : hexToRgb(opt.color);
     colourFor(shownArt);
+    // A change of ad setting matters right away if an ad is on now.
+    if (state && state.ad) render(Object.assign({}, state));
+    refit();
+  }
+
+  // Hide, then show again, so the in= and out= animations can be watched (the editor's "Play it").
+  function replay() {
+    if (!np.classList.contains('show')) { show(true); return; }
+    show(false);
+    setTimeout(() => show(true), 350 * SPEEDS[opt.speed] + 500);
   }
   configure({});
 
@@ -514,6 +610,7 @@
     if (window.parent === window || e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
     if (e.data.np === 'look') configure(readLook(new URLSearchParams(e.data.params || '')));
     else if (e.data.np === 'song' && opt.preview) render(Object.assign({ type: 'nowplaying' }, e.data.song));
+    else if (e.data.np === 'replay') replay();
   });
   if (window.parent !== window) window.parent.postMessage({ np: 'ready' }, '*');
   if (opt.preview) return;
@@ -650,6 +747,11 @@
         render(data);
       } else if (data && data.type === 'nowplaying-art') {
         takeCoverPart(data);
+      } else if (data && data.type === 'nowplaying-look' && opt.sync && typeof data.params === 'string') {
+        // The look saved in Streamer.bot by the editor: applied live, so the OBS link never changes.
+        configure(readLook(new URLSearchParams(data.params)));
+      } else if (data && data.type === 'nowplaying-replay') {
+        replay();
       }
     };
     ws.onclose = () => {

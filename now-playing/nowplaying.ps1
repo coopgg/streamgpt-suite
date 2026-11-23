@@ -202,6 +202,10 @@ while ($true) {
       $props  = Await ($s.TryGetMediaPropertiesAsync()) $PropsType
       $title  = [string]$props.Title
       $artist = [string]$props.Artist
+      # Spotify ads (free accounts) reach Windows with no artist (or "Spotify") or titled
+      # "Advertisement"; every real Spotify song has an artist.
+      $isAd = ($appId.ToLowerInvariant().Contains('spotify') -and [bool]$title -and
+               ((-not $artist.Trim()) -or $artist -eq 'Spotify' -or $title -eq 'Advertisement'))
       if (-not $artist) { $artist = [string]$props.AlbumArtist }
       $album  = [string]$props.AlbumTitle
 
@@ -219,7 +223,7 @@ while ($true) {
 
       # Spotify can change the title a few seconds before the cover arrives, so keep looking for 10 checks.
       $artChanged = $false
-      if ($artTries -lt 10) {
+      if ($artTries -lt 10 -and -not $isAd) {
         $artTries++
         $newArt = Get-ArtDataUri $props
         if ($newArt -and $newArt -ne $art) { $art = $newArt; $artChanged = $true }
@@ -233,7 +237,7 @@ while ($true) {
 
       if ($sig -ne $lastSig -or $artChanged -or $seeked -or $heartbeat) {
         Emit ([ordered]@{
-          type = 'nowplaying'; playing = $isPlaying; status = $status
+          type = 'nowplaying'; playing = $isPlaying; status = $status; ad = [bool]$isAd
           title = $title; artist = $artist; album = $album
           source = (Get-SourceName $appId); appId = $appId
           position = [Math]::Round($position, 1); duration = [Math]::Round($duration, 1)
