@@ -384,6 +384,24 @@
   // ---------- rendering ----------
   let state = null, basePos = 0, baseAt = 0, trackKey = '', hideTimer = null, shownArt = null;
 
+  // Covers from Streamer.bot arrive in parts after the song; they are put back together here and
+  // attached to the song whose artId matches. The last few are kept so a resend needs no new parts.
+  const covers = new Map(), coverParts = new Map();
+  function takeCoverPart(m) {
+    if (!m.artId || typeof m.data !== 'string' || !(m.parts > 0) || !(m.part >= 0) || m.part >= m.parts) return;
+    let p = coverParts.get(m.artId);
+    if (!p || p.length !== m.parts) { p = new Array(m.parts); coverParts.set(m.artId, p); }
+    p[m.part] = m.data;
+    for (let i = 0; i < p.length; i++) if (p[i] === undefined) return;
+    coverParts.delete(m.artId);
+    covers.set(m.artId, p.join(''));
+    while (covers.size > 6) covers.delete(covers.keys().next().value);
+    if (state && state.artId === m.artId && state.art !== covers.get(m.artId)) {
+      const now = state.playing ? basePos + (performance.now() - baseAt) / 1000 : basePos;
+      render(Object.assign({}, state, { art: covers.get(m.artId), position: now }));
+    }
+  }
+
   const fmt = (s) => {
     s = Math.max(0, Math.floor(s || 0));
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = String(s % 60).padStart(2, '0');
@@ -627,7 +645,11 @@
       else if (msg.type === 'nowplaying') data = msg;
       if (data && typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { data = null; } }
       if (data && data.type === 'nowplaying') {
+        // The cover comes separately, in parts (it is too big for one Streamer.bot message).
+        if (!data.art && data.artId) data.art = covers.get(data.artId) || null;
         render(data);
+      } else if (data && data.type === 'nowplaying-art') {
+        takeCoverPart(data);
       }
     };
     ws.onclose = () => {

@@ -54,6 +54,8 @@ public class CPHInline
     private Process watcher;
     private bool stopping;
     private bool coverLogged;
+    private string latestArt;
+    private string latestArtId;
     private int crashCount;
     private string latestJson;
     private JObject latest;
@@ -85,6 +87,7 @@ public class CPHInline
         {
             case "resend":
                 Broadcast();
+                BroadcastArt();
                 return true;
             case "song":
                 SendSongToChat();
@@ -209,10 +212,21 @@ public class CPHInline
         string source = (string)o["source"] ?? "";
         bool playing = o["playing"] != null && (bool)o["playing"];
 
+        // The cover travels separately, in small parts (see BroadcastArt): a whole cover in one
+        // message is too big for Streamer.bot's WebSocket and the message never arrives.
+        string art = (string)o["art"];
+        bool hasArt = !string.IsNullOrEmpty(art);
+        string artId = hasArt ? art.Length.ToString("x") + "-" + ((uint)art.GetHashCode()).ToString("x") : "";
+        o.Remove("art");
+        o["artId"] = artId;
+        bool artChanged;
+
         lock (gate)
         {
             latest = o;
             latestJson = o.ToString(Newtonsoft.Json.Formatting.None);
+            artChanged = hasArt && artId != latestArtId;
+            if (hasArt) { latestArt = art; latestArtId = artId; }
             crashCount = 0;
         }
 
@@ -223,11 +237,10 @@ public class CPHInline
         CPH.SetGlobalVar("np_playing", playing, false);
 
         Broadcast();
+        if (artChanged) BroadcastArt();
 
         // Log each new song and whether its cover came through, so a missing cover is easy to spot.
         string key = title + "|" + artist;
-        string art = (string)o["art"];
-        bool hasArt = !string.IsNullOrEmpty(art);
         if (hasArt && key == lastTrackKey && !coverLogged)
         {
             coverLogged = true;
@@ -258,6 +271,32 @@ public class CPHInline
         if (json == null) return;
         try { CPH.WebsocketBroadcastJson(json); }
         catch (Exception ex) { SafeLog("Broadcast failed: " + ex.Message); }
+    }
+
+    // Sends the current cover in parts of about 8 KB; the overlay puts them back together by artId.
+    private const int ArtPartSize = 8000;
+    private void BroadcastArt()
+    {
+        string art, id;
+        lock (gate) { art = latestArt; id = latestArtId; }
+        if (string.IsNullOrEmpty(art)) return;
+        int parts = (art.Length + ArtPartSize - 1) / ArtPartSize;
+        try
+        {
+            for (int i = 0; i < parts; i++)
+            {
+                var msg = new JObject
+                {
+                    ["type"] = "nowplaying-art",
+                    ["artId"] = id,
+                    ["part"] = i,
+                    ["parts"] = parts,
+                    ["data"] = art.Substring(i * ArtPartSize, Math.Min(ArtPartSize, art.Length - i * ArtPartSize))
+                };
+                CPH.WebsocketBroadcastJson(msg.ToString(Newtonsoft.Json.Formatting.None));
+            }
+        }
+        catch (Exception ex) { SafeLog("Sending the cover failed: " + ex.Message); }
     }
 
     private void SendSongToChat()
