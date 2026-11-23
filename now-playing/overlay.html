@@ -12,7 +12,7 @@
   whichever ink (light or dark) reads best on it.
 
   URL options (all optional), e.g. overlay.html?theme=strip&align=right
-    theme=field       field, strip, bare or poster
+    theme=field       field, strip, bare, poster or glow
     color=auto        auto = the field takes the album art's colour, or a fixed hex like 15171c
     align=left        left or right
     scale=1           size multiplier, e.g. 1.5
@@ -110,6 +110,24 @@
   .t-poster .field { padding: 16px 20px 22px; }
   .t-poster .title { font-size: 32px; }
 
+  /* ---------- glow: the cover glows in its own colours ----------
+     Opt-in, and the one theme outside the no-glow, no-blur house rules.
+     The glow is a blurred, saturated copy of the cover itself (background: inherit),
+     so it always matches the art with no colour picking. */
+  .t-glow .np { background: transparent; width: 480px; padding: 22px; --ink: #fff; --ink-2: rgba(255, 255, 255, 0.88); --track: rgba(0, 0, 0, 0.5); }
+  .t-glow .cover { position: relative; isolation: isolate; width: 96px; }
+  .t-glow .cover::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: inherit;
+    filter: blur(22px) saturate(1.8); /* taste-skill-ignore: this theme exists for the glow */
+    scale: 1.25; opacity: 0.9;
+  }
+  /* A box's own background paints under its children, so a sharp copy of the cover goes on top of the glow. */
+  .t-glow .cover::after { content: ""; position: absolute; inset: 0; background: inherit; }
+  .t-glow .field { padding: 0 0 0 20px; }
+  .t-glow .field > :not(.bar) { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.55); } /* taste-skill-ignore */
+  .t-glow .bar { position: static; margin-top: 10px; }
+
   /* ---------- new song: the text rises in, the cover fades up ---------- */
   @media (prefers-reduced-motion: no-preference) {
     .np.swap .cover { animation: fade 0.5s ease both; }
@@ -147,7 +165,7 @@
     port: q.get('port') || '8080',
     endpoint: q.get('endpoint') || '/',
     password: q.get('password') || '',
-    theme: ['field', 'strip', 'bare', 'poster'].includes(themeIn) ? themeIn : 'field',
+    theme: ['field', 'strip', 'bare', 'poster', 'glow'].includes(themeIn) ? themeIn : 'field',
     color: colorIn === 'auto' ? 'auto' : colorIn.replace(/[^0-9a-f]/g, ''),
     align: q.get('align') === 'right' ? 'right' : 'left',
     scale: parseFloat(q.get('scale')) || 1,
@@ -207,12 +225,12 @@
 
   function applyPalette(p) {
     root.style.setProperty('--ground', css(p.ground));
-    if (opt.theme !== 'bare') {
+    if (opt.theme !== 'bare' && opt.theme !== 'glow') {
       root.style.setProperty('--ink', css(p.ink));
       root.style.setProperty('--ink-2', css(p.ink, 0.8));
       root.style.setProperty('--track', css(p.ink, 0.2));
     }
-    root.style.setProperty('--accent', css(opt.theme === 'bare' && p.vivid ? p.vivid : p.accent));
+    root.style.setProperty('--accent', css((opt.theme === 'bare' || opt.theme === 'glow') && p.vivid ? p.vivid : p.accent));
   }
 
   const coverCache = new Map();

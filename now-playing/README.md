@@ -34,7 +34,7 @@ Add these to the end of the URL, for example `overlay.html?theme=strip&align=rig
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `theme` | `field` | `field` (the cover beside a block of its color), `strip` (one slim line), `bare` (no block, just the cover and text over your scene) or `poster` (a big cover with the text underneath) |
+| `theme` | `field` | `field` (the cover beside a block of its color), `strip` (one slim line), `bare` (no block, just the cover and text over your scene), `poster` (a big cover with the text underneath) or `glow` (the cover glows in its own colors, from a blurred copy of the cover itself; the one theme that breaks the no-glow design rules, so it's opt-in) |
 | `color` | `auto` | `auto` gives the overlay each song's main cover color, with light or dark text, whichever reads better. Or set a fixed hex color like `15171c`. |
 | `align` | `left` | `left` or `right` |
 | `scale` | `1` | Size multiplier, e.g. `1.5` |
