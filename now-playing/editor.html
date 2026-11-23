@@ -210,6 +210,15 @@
           <span class="hint" style="margin:0">Text switches between light and dark to stay readable.</span>
         </div>
       </div>
+      <div class="row" id="textRow">
+        <span class="label">Text size</span>
+        <div class="seg" data-name="text">
+          <button type="button" data-value="normal">Normal</button>
+          <button type="button" data-value="large">Large</button>
+          <button type="button" data-value="xl">Extra large</button>
+        </div>
+        <span class="hint">Larger if the artist and time are hard to read once the widget is scaled down.</span>
+      </div>
       <div class="row" id="cornersRow">
         <span class="label">Corners</span>
         <div class="seg" data-name="corners">
@@ -359,7 +368,7 @@
   const lookDefaults = {
     theme: 'field', rpm: '33.33', colorMode: 'auto', color: '#15171c', align: 'left', corners: 'round',
     fit: true, scale: 1, source: true, time: true, progress: true, hide: 5, popup: 0,
-    in: 'rise', out: 'sink', change: 'rise', speed: 'normal', ads: 'hide'
+    in: 'rise', out: 'sink', change: 'rise', speed: 'normal', ads: 'hide', text: 'normal'
   };
   const defaults = Object.assign({
     mode: 'sample', via: 'sb', scene: 'dark', sync: true,
@@ -396,6 +405,7 @@
     if (st.change !== 'rise') p.set('change', st.change);
     if (st.speed !== 'normal') p.set('speed', st.speed);
     if (st.ads !== 'hide') p.set('ads', st.ads);
+    if (st.text !== 'normal') p.set('text', st.text);
     return p;
   }
   // The look saved in Streamer.bot, read back into the controls.
@@ -421,7 +431,8 @@
       out: one('out', ['sink', 'fade', 'slide', 'pop', 'none'], 'sink'),
       change: one('change', ['rise', 'fade', 'slide', 'none'], 'rise'),
       speed: one('speed', ['slow', 'normal', 'fast'], 'normal'),
-      ads: one('ads', ['hide', 'show'], 'hide')
+      ads: one('ads', ['hide', 'show'], 'hide'),
+      text: one('text', ['normal', 'large', 'xl'], 'normal')
     });
     fillInputs();
     update(false);
@@ -557,7 +568,7 @@
     $('bridgeBox').hidden = st.via !== 'bridge';
     $('rpmRow').hidden = !vinyl;
     // Vinyl is just the record: no text to show, and the progress is a ring around it.
-    $('sourceRow').hidden = $('timeRow').hidden = $('cornersRow').hidden = vinyl;
+    $('sourceRow').hidden = $('timeRow').hidden = $('cornersRow').hidden = $('textRow').hidden = vinyl;
     $('progressLabel').textContent = vinyl ? 'Progress ring around the record' : 'Progress bar';
     $('colorRow').hidden = st.colorMode !== 'fixed';
     $('alignRow').hidden = st.fit;

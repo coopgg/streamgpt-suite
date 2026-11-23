@@ -28,6 +28,7 @@
     change=rise       on a new song: rise, fade, slide or none
     speed=normal      slow, normal or fast
     ads=hide          during Spotify ads: hide, or show (an "Ad break" card)
+    text=normal       text size: normal, large or xl (the small lines grow most)
     sync=1            0 = ignore the look saved in Streamer.bot and use only this link
     hide=5            seconds after pausing before it hides, 0 = never hide
     popup=0           seconds to show after each new song then hide, 0 = always show while playing
@@ -53,7 +54,9 @@
   :root {
     --ground: #15171c;
     --ink: #f6f6f8;
-    --ink-2: rgba(246, 246, 248, 0.8);
+    --ink-2: rgba(246, 246, 248, 0.88);
+    --tt: 1;   /* title size multiplier (text=) */
+    --ts: 1;   /* small text size multiplier: artist, time, app */
     --track: rgba(246, 246, 248, 0.2);
     --accent: #ff5a5a;
     --scale: 1;
@@ -106,11 +109,11 @@
   .line.scroll span { animation: marquee var(--dur, 10s) ease-in-out infinite; }
   @keyframes marquee { 0%, 18% { transform: translateX(0); } 82%, 100% { transform: translateX(var(--shift)); } }
 
-  .title { font-family: var(--display); font-weight: 600; font-size: 30px; line-height: 1.08; letter-spacing: -0.01em; }
-  .artist { font-size: 15px; font-weight: 500; line-height: 1.35; color: var(--ink-2); margin-top: 2px; }
+  .title { font-family: var(--display); font-weight: 600; font-size: calc(30px * var(--tt)); line-height: 1.08; letter-spacing: -0.01em; }
+  .artist { font-size: calc(15px * var(--ts)); font-weight: 500; line-height: 1.35; color: var(--ink-2); margin-top: 2px; }
   .info {
     display: flex; justify-content: space-between; gap: 12px; margin-top: 8px;
-    font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink-2);
+    font-size: calc(13px * var(--ts)); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink-2);
   }
   .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--track); }
   .fill { height: 100%; width: 0; background: var(--accent); transition: background-color 0.6s ease, opacity 0.3s ease; }
@@ -125,8 +128,8 @@
   .t-strip .np { width: 520px; min-height: 50px; }
   .t-strip .cover { width: 50px; }
   .t-strip .field { flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 12px; padding: 0 18px 3px; align-self: center; }
-  .t-strip .title { font-size: 21px; flex: 0 1 auto; min-width: 0; }
-  .t-strip .artist { font-size: 14px; flex: 1 1 0; min-width: 40px; margin: 0; }
+  .t-strip .title { font-size: calc(21px * var(--tt)); flex: 0 1 auto; min-width: 0; }
+  .t-strip .artist { font-size: calc(14px * var(--ts)); flex: 1 1 0; min-width: 40px; margin: 0; }
   .t-strip .info { display: none; }
   .t-strip .field { position: static; }
   .t-strip .bar { height: 3px; left: 50px; }
@@ -144,7 +147,7 @@
   .t-poster .np { flex-direction: column; width: 280px; }
   .t-poster .cover-wrap, .t-poster .cover { width: 100%; }
   .t-poster .field { padding: 16px 20px 22px; }
-  .t-poster .title { font-size: 32px; }
+  .t-poster .title { font-size: calc(32px * var(--tt)); }
 
   /* ---------- glow: the cover glows in its own colours ----------
      Opt-in, and the one theme outside the no-glow, no-blur house rules.
@@ -286,6 +289,7 @@
       change: pick(p.get('change'), ['rise', 'fade', 'slide', 'none'], 'rise'),
       speed: pick(p.get('speed'), ['slow', 'normal', 'fast'], 'normal'),
       ads: pick(p.get('ads'), ['hide', 'show'], 'hide'),
+      text: pick(p.get('text'), ['normal', 'large', 'xl'], 'normal'),
       hide: p.has('hide') ? Math.max(0, parseFloat(p.get('hide')) || 0) : 5,
       popup: Math.max(0, parseFloat(p.get('popup')) || 0),
       source: p.get('source') !== '0',
@@ -370,7 +374,7 @@
     const onScene = opt.theme === 'bare' || opt.theme === 'glow' || opt.theme === 'vinyl';
     if (!onScene) {
       root.style.setProperty('--ink', css(p.ink));
-      root.style.setProperty('--ink-2', css(p.ink, 0.8));
+      root.style.setProperty('--ink-2', css(p.ink, 0.88));
       root.style.setProperty('--track', css(p.ink, 0.2));
     }
     root.style.setProperty('--accent', css(onScene && p.vivid ? p.vivid : p.accent));
@@ -604,6 +608,7 @@
   const IN_NAMES = { rise: 'np-rise-in', fade: 'np-fade-in', slide: 'np-slide-in', pop: 'np-pop-in', none: 'none' };
   const OUT_NAMES = { sink: 'np-sink-out', fade: 'np-fade-out', slide: 'np-slide-out', pop: 'np-pop-out', none: 'none' };
   const SPEEDS = { slow: 1.6, normal: 1, fast: 0.6 };
+  const TEXT_SIZES = { normal: [1, 1], large: [1.12, 1.3], xl: [1.24, 1.6] };
 
   function configure(look) {
     Object.assign(opt, look);
@@ -612,6 +617,9 @@
     root.style.setProperty('--in-name', IN_NAMES[opt.in]);
     root.style.setProperty('--out-name', OUT_NAMES[opt.out]);
     root.style.setProperty('--spd', SPEEDS[opt.speed]);
+    // Text size: the small lines grow most, since they are the first to become hard to read.
+    root.style.setProperty('--tt', TEXT_SIZES[opt.text][0]);
+    root.style.setProperty('--ts', TEXT_SIZES[opt.text][1]);
     root.style.setProperty('--dir', !opt.fit && opt.align === 'right' ? -1 : 1);
     root.style.setProperty('--spin', (60 / opt.rpm).toFixed(3) + 's');
     np.classList.toggle('no-source', !opt.source);

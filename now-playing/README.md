@@ -55,6 +55,7 @@ The editor sets all of these for you. By hand, add them to the end of the URL, f
 | `change` | `rise` | On a new song: `rise`, `fade`, `slide` or `none` |
 | `speed` | `normal` | Animation speed: `slow`, `normal` or `fast` |
 | `ads` | `hide` | During Spotify ads (free accounts): `hide`, or `show` an "Ad break" card |
+| `text` | `normal` | Text size: `normal`, `large` or `xl`. The artist, time and app name grow most, since they get hard to read first when the widget is scaled down. |
 | `sync` | `1` | `0` ignores the look saved in Streamer.bot and uses only the link |
 | `hide` | `5` | Seconds after you pause before the card hides. `0` keeps it up. |
 | `popup` | `0` | Show for this many seconds on each new song, then hide. `0` shows it the whole time music plays. |
